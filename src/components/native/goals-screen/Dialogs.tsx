@@ -20,6 +20,7 @@ export function GoalsScreenDialogs({
   createReportDialogOpen,
   goalDialogOpen,
   aiOpen,
+  aiInitialPrompt,
   editingGoal,
   categories,
   rewards,
@@ -35,6 +36,7 @@ export function GoalsScreenDialogs({
   createReportDialogOpen: boolean;
   goalDialogOpen: boolean;
   aiOpen: boolean;
+  aiInitialPrompt?: string;
   editingGoal?: Goal | null;
   categories: CategoryOption[];
   rewards: Reward[];
@@ -73,6 +75,7 @@ export function GoalsScreenDialogs({
           open={aiOpen}
           onOpenChange={onAiOpenChange}
           onDraftAdded={onDraftAdded}
+          initialPrompt={aiInitialPrompt}
         />
       )}
     </Suspense>

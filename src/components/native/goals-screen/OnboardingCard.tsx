@@ -5,42 +5,21 @@ import { buildRewardsPath } from "@/app/routes";
 import { useNativeNavigation } from "@/app/native/NativeNavigation";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 import { NativeRewardIcon } from "@/components/native/NativeRewardIcon";
-import { CircleCheck, Target } from "@/components/native/icons";
+import { Target } from "@/components/native/icons";
 import { appPalette } from "@/theme/palette";
-import type { OnboardingStepKey, Reward } from "@/types";
+import type { Reward } from "@/types";
 
-import type { OnboardingChecklistState } from "@/shared/screens/onboarding/model";
-
-type VisibleOnboardingStepKey = Exclude<OnboardingStepKey, "added_first_task">;
+import { ONBOARDING_STEPS, type OnboardingChecklistState } from "@/shared/screens/onboarding/model";
 const STEP_XP = 100;
-
-const STEP_META: Record<
-  VisibleOnboardingStepKey,
-  {
-    titleKey: string;
-    descriptionKey: string;
-  }
-> = {
-  created_first_goal: {
-    titleKey: "onboarding.steps.create_goal_title",
-    descriptionKey: "onboarding.steps.create_goal_description",
-  },
-  used_ai: {
-    titleKey: "onboarding.steps.use_ai_title",
-    descriptionKey: "onboarding.steps.use_ai_description",
-  },
-  completed_first_task: {
-    titleKey: "onboarding.steps.complete_task_title",
-    descriptionKey: "onboarding.steps.complete_task_description",
-  },
-};
 
 export function OnboardingCard({
   state,
   reward,
+  onUsePrompt,
 }: {
   state: OnboardingChecklistState;
   reward: Reward | null;
+  onUsePrompt: (prompt: string) => void;
 }) {
   const { t } = useTranslation();
   const { navigateToPath } = useNativeNavigation();
@@ -48,6 +27,8 @@ export function OnboardingCard({
   if (state.isComplete) {
     return null;
   }
+
+  const nextStep = state.steps.find((step) => !step.completed);
 
   return (
     <View
@@ -110,16 +91,15 @@ export function OnboardingCard({
       </View>
 
       <View style={{ gap: 8 }}>
-        {state.steps.map((step) => {
-          const meta = STEP_META[step.key as VisibleOnboardingStepKey];
+        {nextStep ? (() => {
+          const meta = ONBOARDING_STEPS.find((item) => item.key === nextStep.key);
+          if (!meta) {
+            return null;
+          }
 
           return (
             <View
-              key={step.key}
               style={{
-                flexDirection: "row",
-                alignItems: "flex-start",
-                gap: 12,
                 padding: 12,
                 borderRadius: 12,
                 borderWidth: 1,
@@ -127,21 +107,6 @@ export function OnboardingCard({
                 backgroundColor: appPalette.surface.background,
               }}
             >
-              <View style={{ marginTop: 2 }}>
-                {step.completed ? (
-                  <CircleCheck size={16} color={appPalette.semantic.successText} />
-                ) : (
-                  <View
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 999,
-                      borderWidth: 2,
-                      borderColor: appPalette.semantic.borderSubtle,
-                    }}
-                  />
-                )}
-              </View>
               <View style={{ flex: 1, gap: 4 }}>
                 <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
                   <Text
@@ -179,7 +144,7 @@ export function OnboardingCard({
                 </View>
                 <Text
                   style={{
-                    color: appPalette.semantic.textMuted,
+                    color: appPalette.semantic.textStrong,
                     fontSize: 12,
                     lineHeight: 18,
                     fontFamily: "Montserrat",
@@ -187,10 +152,48 @@ export function OnboardingCard({
                 >
                   {t(meta.descriptionKey)}
                 </Text>
+                <Pressable
+                  onPress={() => onUsePrompt(t(meta.promptKey))}
+                  style={{
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderStyle: "dashed",
+                    borderColor: appPalette.semantic.borderSubtle,
+                    backgroundColor: appPalette.semantic.neutralSurface,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    marginTop: 4,
+                    gap: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: appPalette.semantic.textMuted,
+                      fontSize: 9,
+                      lineHeight: 13,
+                      fontWeight: "600",
+                      letterSpacing: 0.3,
+                      fontFamily: "Montserrat",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {t("onboarding.prompt_label")}
+                  </Text>
+                  <Text
+                    style={{
+                      color: appPalette.semantic.textMuted,
+                      fontSize: 11,
+                      lineHeight: 16,
+                      fontFamily: "Montserrat",
+                    }}
+                  >
+                    {t(meta.promptKey)}
+                  </Text>
+                </Pressable>
               </View>
             </View>
           );
-        })}
+        })() : null}
       </View>
 
       {reward && (

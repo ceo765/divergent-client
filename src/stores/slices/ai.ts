@@ -58,6 +58,12 @@ export const createAiSlice: StoreSlice<AiSlice> = (set, get) => ({
       }));
 
       await get().completeOnboardingStep("created_first_goal");
+      if (goal.goalType === "PROGRESS") {
+        await get().completeOnboardingStep("created_first_numeric_goal");
+      }
+      if (goal.goalType === "TASK" && goal.taskXpTarget != null) {
+        await get().completeOnboardingStep("set_completion_threshold");
+      }
 
       if (reward) {
         set((state) => ({

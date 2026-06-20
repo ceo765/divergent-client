@@ -19,6 +19,7 @@ export default function NativeGoalsScreen(props: {
   const {
     loading,
     goals,
+    reminders,
     rewards,
     categories,
     goalDialogOpen,
@@ -37,11 +38,13 @@ export default function NativeGoalsScreen(props: {
     setGoalDialogOpen,
     setCreateReportDialogOpen,
     setAiOpen,
+    openAi,
+    aiInitialPrompt,
     userTimeZone,
     handleTaskToggle,
     handleDraftAdded,
   } = useGoalsScreenController(props);
-  const onboarding = useOnboardingChecklist(goals);
+  const onboarding = useOnboardingChecklist(goals, reminders);
   const categoriesWithGoals = useMemo(
     () => categories.filter((category) => goals.some((goal) => goal.category === category.value)),
     [categories, goals],
@@ -74,7 +77,7 @@ export default function NativeGoalsScreen(props: {
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
         onCreate={openCreateGoal}
-        onOpenAi={() => setAiOpen(true)}
+        onOpenAi={() => openAi()}
       />
 
       <GoalsScreenContent
@@ -94,6 +97,7 @@ export default function NativeGoalsScreen(props: {
         onAddReminder={openReminderForGoal}
         onAddProgress={addProgress}
         onGoToProgress={navigateToProgress}
+        onUsePrompt={openAi}
       />
 
       <GoalsScreenDialogs
@@ -107,6 +111,7 @@ export default function NativeGoalsScreen(props: {
         onCreateReportDialogOpenChange={setCreateReportDialogOpen}
         onGoalDialogOpenChange={setGoalDialogOpen}
         onAiOpenChange={setAiOpen}
+        aiInitialPrompt={aiInitialPrompt}
         onSaveReport={saveReport}
         onSaveGoal={saveGoal}
         onDeleteGoal={removeGoal}

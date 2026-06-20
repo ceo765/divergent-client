@@ -60,6 +60,7 @@ export function useGoalsScreenController(props: {
     ...screen,
     userTimeZone: user?.timeZone ?? "UTC",
     openReminderForGoal,
+    openAi: screen.openAi,
     handleTaskToggle,
     handleDraftAdded,
   };

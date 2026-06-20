@@ -19,9 +19,10 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDraftAdded: (goal: Goal) => void;
+  initialPrompt?: string;
 }
 
-export default function AiChatDialog({ open, onOpenChange, onDraftAdded }: Props) {
+export default function AiChatDialog({ open, onOpenChange, onDraftAdded, initialPrompt }: Props) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const {
@@ -39,7 +40,7 @@ export default function AiChatDialog({ open, onOpenChange, onDraftAdded }: Props
     handleGenerate,
     handleDraftAdded,
     resetSession,
-  } = useAiChatSession({ open, onDraftAdded });
+  } = useAiChatSession({ open, onDraftAdded, initialPrompt });
 
   useEffect(() => {
     if (!allowAutoScrollRef.current) {

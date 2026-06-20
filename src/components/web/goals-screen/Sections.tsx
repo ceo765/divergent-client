@@ -90,6 +90,7 @@ export function GoalsScreenContent({
   onAddReminder,
   onAddProgress,
   onGoToProgress,
+  onUsePrompt,
 }: {
   loading: boolean;
   goals: Goal[];
@@ -105,6 +106,7 @@ export function GoalsScreenContent({
   onAddReminder: (id: string) => void;
   onAddProgress: (goalId: string, delta: number) => Promise<void>;
   onGoToProgress: (id: string) => void;
+  onUsePrompt: (prompt: string) => void;
 }) {
   const { t } = useTranslation();
   const onboardingRef = useRef<HTMLDivElement | null>(null);
@@ -164,7 +166,7 @@ export function GoalsScreenContent({
 
       {showOnboarding && (
         <div ref={onboardingRef}>
-          <OnboardingCard state={onboarding} reward={onboardingReward} />
+          <OnboardingCard state={onboarding} reward={onboardingReward} onUsePrompt={onUsePrompt} />
         </div>
       )}
     </div>

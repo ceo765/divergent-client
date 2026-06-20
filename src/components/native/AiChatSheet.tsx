@@ -24,7 +24,7 @@ const rewardIconMap: Record<RewardIconType, React.ComponentType<{ size?: string 
   zap: Zap,
 };
 
-export function AiChatSheet({ open, onOpenChange, onDraftAdded }: { open: boolean; onOpenChange: (open: boolean) => void; onDraftAdded: (goal: Goal) => void }) {
+export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }: { open: boolean; onOpenChange: (open: boolean) => void; onDraftAdded: (goal: Goal) => void; initialPrompt?: string }) {
   const { t } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
   const { headerPanHandlers, sheetStyle } = useSheetDragToClose(open, () => onOpenChange(false));
@@ -42,7 +42,7 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded }: { open: boolea
     allowAutoScrollRef,
     handleGenerate,
     handleDraftAdded,
-  } = useAiChatSession({ open, onDraftAdded });
+  } = useAiChatSession({ open, onDraftAdded, initialPrompt });
 
   useEffect(() => {
     if (!open || history.length === 0) {

@@ -1,5 +1,6 @@
 import * as api from "@/shared/api/client";
 import type { AppStoreActions, StoreSlice } from "@/stores/types";
+import type { Goal } from "@/types";
 
 type GoalsSlice = Pick<
   AppStoreActions,
@@ -29,6 +30,16 @@ function hasAnyCompletedTask(tasks: TaskCompletionLike[]): boolean {
 
     return hasAnyCompletedTask(task.subtasks ?? []);
   });
+}
+
+async function completeGoalOnboardingSteps(get: () => { completeOnboardingStep: AppStoreActions["completeOnboardingStep"] }, goal: Goal) {
+  if (goal.goalType === "PROGRESS") {
+    await get().completeOnboardingStep("created_first_numeric_goal");
+  }
+
+  if (goal.goalType === "TASK" && goal.taskXpTarget != null) {
+    await get().completeOnboardingStep("set_completion_threshold");
+  }
 }
 
 export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
@@ -64,6 +75,7 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
       const newGoal = await api.createGoal(goal);
       set({ goals: [...get().goals, newGoal] });
       await get().completeOnboardingStep("created_first_goal");
+      await completeGoalOnboardingSteps(get, newGoal);
     } catch (err) {
       console.error(err);
     } finally {
@@ -94,6 +106,7 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
           item.id === updatedGoal.id ? updatedGoal : item
         ),
       });
+      await completeGoalOnboardingSteps(get, updatedGoal);
     } catch (err) {
       console.error(err);
     } finally {
@@ -167,6 +180,17 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
         await get().completeOnboardingStep("completed_first_task");
       }
 
+      if (goal.goalType === "TASK" && goal.goalPeriod !== "NONE") {
+        try {
+          const activity = await api.getActivity(goal.id);
+          if (activity.longestStreak >= 3) {
+            await get().completeOnboardingStep("started_first_streak");
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
       if (goal.challenges.length) {
         const challenges = await api.fetchChallenges();
         set({ challenges });
@@ -201,6 +225,17 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
 
       if (hasAnyCompletedTask(goal.tasks)) {
         await get().completeOnboardingStep("completed_first_task");
+      }
+
+      if (goal.goalType === "TASK" && goal.goalPeriod !== "NONE") {
+        try {
+          const activity = await api.getActivity(goal.id);
+          if (activity.longestStreak >= 3) {
+            await get().completeOnboardingStep("started_first_streak");
+          }
+        } catch (error) {
+          console.error(error);
+        }
       }
     } catch (err) {
       console.error(err);

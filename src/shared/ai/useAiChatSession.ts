@@ -7,9 +7,10 @@ import type { ChatMessage, Goal } from "@/types";
 type UseAiChatSessionArgs = {
   open: boolean;
   onDraftAdded: (goal: Goal) => void;
+  initialPrompt?: string;
 };
 
-export function useAiChatSession({ open, onDraftAdded }: UseAiChatSessionArgs) {
+export function useAiChatSession({ open, onDraftAdded, initialPrompt }: UseAiChatSessionArgs) {
   const { t } = useTranslation();
   const { chatAIStream, getChatHistory } = useAppStore();
 
@@ -41,6 +42,10 @@ export function useAiChatSession({ open, onDraftAdded }: UseAiChatSessionArgs) {
       return;
     }
 
+    if (initialPrompt) {
+      setPrompt(initialPrompt);
+    }
+
     const loadHistory = async () => {
       setHistoryLoading(true);
       try {
@@ -54,7 +59,7 @@ export function useAiChatSession({ open, onDraftAdded }: UseAiChatSessionArgs) {
     };
 
     void loadHistory();
-  }, [open, getChatHistory]);
+  }, [open, getChatHistory, initialPrompt]);
 
   useEffect(() => {
     if (!loading || generationStartedAt == null) {

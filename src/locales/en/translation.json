@@ -90,20 +90,28 @@
                     "title":  "Getting started",
                     "subtitle":  "A few quick steps will help you get oriented and see your first progress.",
                     "progress":  "{{completed}} of {{total}} completed",
+                    "prompt_label":  "Prompt",
                     "actions":  {
                                      "create_goal":  "Create goal",
                                      "open_goal":  "Open goal",
                                      "open_ai":  "Open AI"
                                  },
                     "steps":  {
-                                   "create_goal_title":  "Create your first goal",
-                                   "create_goal_description":  "Add a goal to track tasks, progress, and streaks.",
-                                   "add_task_title":  "Add your first task",
-                                   "add_task_description":  "Break the goal into one clear next step.",
-                                   "use_ai_title":  "Message the AI assistant",
-                                   "use_ai_description":  "AI can help assemble a goal and first tasks for you.",
-                                   "complete_task_title":  "Mark your first task as done",
-                                   "complete_task_description":  "The first completion kicks off XP and makes progress visible."
+                                   "first_goal_title":  "Create your first goal",
+                                   "first_goal_description":  "Tell the AI assistant about the things you've been putting off. It will turn them into a clear plan with tasks and reminders.",
+                                   "first_goal_prompt":  "I want to finally deal with the unfinished stuff: clean the apartment, cook meals for the week, and clear unnecessary apps from my phone. Help me make a plan.",
+                                   "numeric_goal_title":  "Set a goal with a number",
+                                   "numeric_goal_description":  "Some goals are measured in numbers: money, kilometers, books, kilograms. Create one and track your progress each time you move forward.",
+                                   "numeric_goal_prompt":  "I want to build an emergency fund and save 100,000 rubles. Help me set the goal and reminders so I can put money aside regularly.",
+                                   "threshold_title":  "A day counts even if you did not do everything",
+                                   "threshold_description":  "You do not have to complete every task. 60% is enough. It protects your streak on hard days and teaches you not to quit a goal after one miss. Example: 60% threshold = 3 of 5 tasks = the day counts.",
+                                   "threshold_prompt":  "I want to build a morning routine: exercise, cold shower, healthy breakfast, reading 10 pages, meditation. But I know I will not manage everything every day.",
+                                   "streak_title":  "Start your first streak",
+                                   "streak_description":  "A streak is a run of days in a row when you complete a goal. The longer the streak, the more XP and the stronger the habit. Complete a goal 3 days in a row.",
+                                   "streak_prompt":  "I want to go for a 20-minute walk every day, just to move and clear my head. Set a daily reminder for 7:30 PM except on weekends.",
+                                   "reminder_title":  "Set up a reminder",
+                                   "reminder_description":  "Without reminders even important goals get forgotten. Set a time and the app will remind you when it is time to act.",
+                                   "reminder_prompt":  "I want to spend 30 minutes on English every evening. Remind me at 9:00 PM."
                                }
                 },
     "settings":  {

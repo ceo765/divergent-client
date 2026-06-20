@@ -132,6 +132,10 @@ export type GoalPeriod = "NONE" | "DAILY" | "WEEKLY" | "MONTHLY";
 export type OnboardingStepKey =
   | "created_first_goal"
   | "added_first_task"
+  | "created_first_numeric_goal"
+  | "set_completion_threshold"
+  | "started_first_streak"
+  | "created_first_reminder"
   | "used_ai"
   | "completed_first_task";
 export type OnboardingState = Partial<Record<OnboardingStepKey, string | null>>;

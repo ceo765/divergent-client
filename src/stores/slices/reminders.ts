@@ -12,6 +12,7 @@ export const createRemindersSlice: StoreSlice<RemindersSlice> = (set, get) => ({
     try {
       const newReminder = await api.createReminder(reminder);
       set({ reminders: [...get().reminders, newReminder] });
+      await get().completeOnboardingStep("created_first_reminder");
     } catch (err) {
       console.error(err);
     } finally {

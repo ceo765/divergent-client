@@ -27,6 +27,7 @@ export function useGoalsScreen(
   const {
     loading,
     goals,
+    reminders,
     addGoal,
     updateGoal,
     toggleTask,
@@ -49,6 +50,7 @@ export function useGoalsScreen(
   const [editingReminder, setEditingReminder] = useState<Reminder | undefined>(undefined);
   const [selectedGoalIdForReminder, setSelectedGoalIdForReminder] = useState<string | undefined>(undefined);
   const [aiOpen, setAiOpen] = useState(false);
+  const [aiInitialPrompt, setAiInitialPrompt] = useState<string | undefined>(undefined);
 
   const openCreateGoal = () => {
     setEditingGoal(undefined);
@@ -174,9 +176,15 @@ export function useGoalsScreen(
     return category;
   };
 
+  const openAi = (prompt?: string) => {
+    setAiInitialPrompt(prompt?.trim() || undefined);
+    setAiOpen(true);
+  };
+
   return {
     loading,
     goals,
+    reminders,
     rewards,
     categories,
     goalDialogOpen,
@@ -186,10 +194,12 @@ export function useGoalsScreen(
     editingReminder,
     selectedGoalIdForReminder,
     aiOpen,
+    aiInitialPrompt,
     setGoalDialogOpen,
     setCreateReportDialogOpen,
     setReminderDialogOpen,
     setAiOpen,
+    openAi,
     openCreateGoal,
     openEditGoal,
     saveGoal,

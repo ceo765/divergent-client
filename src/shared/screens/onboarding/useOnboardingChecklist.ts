@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { getChatHistory } from "@/shared/api/client";
+import { getActivity } from "@/shared/api/client";
 import { useAppStore } from "@/stores/useAppStore";
-import type { Goal } from "@/types";
+import type { Goal, Reminder } from "@/types";
 
 import { buildOnboardingChecklist, type OnboardingChecklistState } from "./model";
 
@@ -11,17 +11,17 @@ export type UseOnboardingChecklistResult = OnboardingChecklistState & {
   ready: boolean;
 };
 
-export function useOnboardingChecklist(goals: Goal[]): UseOnboardingChecklistResult {
+export function useOnboardingChecklist(goals: Goal[], reminders: Reminder[]): UseOnboardingChecklistResult {
   const { user } = useAppStore();
-  const [hasAiHistory, setHasAiHistory] = useState(false);
+  const [hasGoalStreak, setHasGoalStreak] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const persistedState = user?.onboardingState ?? null;
-  const needsHistoryFallback = !persistedState?.used_ai;
-  const [historyChecked, setHistoryChecked] = useState(() => !needsHistoryFallback);
+  const needsStreakFallback = !persistedState?.started_first_streak;
+  const [historyChecked, setHistoryChecked] = useState(() => !needsStreakFallback);
 
   useEffect(() => {
-    if (!needsHistoryFallback) {
-      setHasAiHistory(false);
+    if (!needsStreakFallback) {
+      setHasGoalStreak(false);
       setHistoryLoading(false);
       setHistoryChecked(true);
       return;
@@ -33,15 +33,35 @@ export function useOnboardingChecklist(goals: Goal[]): UseOnboardingChecklistRes
     const loadHistory = async () => {
       setHistoryLoading(true);
       try {
-        const history = await getChatHistory();
+        const streakCandidates = goals.filter((goal) => goal.goalType === "TASK" && goal.goalPeriod !== "NONE");
+        if (streakCandidates.length === 0) {
+          if (!cancelled) {
+            setHasGoalStreak(false);
+            setHistoryChecked(true);
+          }
+          return;
+        }
+
+        const history = await Promise.all(
+          streakCandidates.map(async (goal) => {
+            try {
+              const activity = await getActivity(goal.id);
+              return activity.longestStreak >= 3;
+            } catch (error) {
+              console.error(error);
+              return false;
+            }
+          }),
+        );
+
         if (!cancelled) {
-          setHasAiHistory((history ?? []).length > 0);
+          setHasGoalStreak(history.some(Boolean));
           setHistoryChecked(true);
         }
       } catch (error) {
         console.error(error);
         if (!cancelled) {
-          setHasAiHistory(false);
+          setHasGoalStreak(false);
           setHistoryChecked(true);
         }
       } finally {
@@ -56,14 +76,14 @@ export function useOnboardingChecklist(goals: Goal[]): UseOnboardingChecklistRes
     return () => {
       cancelled = true;
     };
-  }, [needsHistoryFallback]);
+  }, [goals, needsStreakFallback]);
 
   return useMemo(
     () => ({
-      ...buildOnboardingChecklist(goals, persistedState, hasAiHistory),
+      ...buildOnboardingChecklist(goals, reminders, persistedState, hasGoalStreak),
       historyLoading,
       ready: historyChecked,
     }),
-    [goals, persistedState, hasAiHistory, historyLoading, historyChecked],
+    [goals, reminders, persistedState, hasGoalStreak, historyLoading, historyChecked],
   );
 }

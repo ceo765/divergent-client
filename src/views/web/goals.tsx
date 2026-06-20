@@ -24,6 +24,7 @@ export default function GoalsScreen() {
   const {
     loading,
     goals,
+    reminders,
     rewards,
     categories,
     goalDialogOpen,
@@ -32,10 +33,12 @@ export default function GoalsScreen() {
     reminderDialogOpen,
     selectedGoalIdForReminder,
     aiOpen,
+    aiInitialPrompt,
     setGoalDialogOpen,
     setCreateReportDialogOpen,
     setReminderDialogOpen,
     setAiOpen,
+    openAi,
     openCreateGoal,
     openEditGoal,
     saveGoal,
@@ -51,7 +54,7 @@ export default function GoalsScreen() {
     onNavigateToProgress: (goalId) => navigate(buildProgressPath({ goalId })),
     onReminderCreated: () => navigate(buildRemindersPath()),
   });
-  const onboarding = useOnboardingChecklist(goals);
+  const onboarding = useOnboardingChecklist(goals, reminders);
   const filteredGoals = useMemo(() => {
     if (selectedCategory === "all") {
       return goals;
@@ -119,7 +122,7 @@ export default function GoalsScreen() {
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
         onCreate={openCreateGoal}
-        onOpenAi={() => setAiOpen(true)}
+        onOpenAi={() => openAi()}
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto pb-2">
@@ -135,10 +138,11 @@ export default function GoalsScreen() {
           onCreate={openCreateGoal}
           onEdit={openEditGoal}
           onTaskToggle={handleTaskToggle}
-          onAddReminder={openReminderForGoal}
-          onAddProgress={addProgress}
-          onGoToProgress={navigateToProgress}
-        />
+        onAddReminder={openReminderForGoal}
+        onAddProgress={addProgress}
+        onGoToProgress={navigateToProgress}
+        onUsePrompt={openAi}
+      />
       </div>
 
       <GoalsScreenDialogs
@@ -155,6 +159,7 @@ export default function GoalsScreen() {
         onReminderDialogOpenChange={setReminderDialogOpen}
         onCreateReportDialogOpenChange={setCreateReportDialogOpen}
         onAiOpenChange={setAiOpen}
+        aiInitialPrompt={aiInitialPrompt}
         onSaveGoal={handleSaveGoal}
         onDeleteGoal={handleDeleteGoal}
         onAddCategory={handleAddCategory}
