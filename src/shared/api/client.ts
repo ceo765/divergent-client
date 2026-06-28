@@ -9,6 +9,7 @@ import type {
   ChallengeApi,
   ChallengeCheckIn,
   ChallengeCheckInInput,
+  ChallengeGroupMessage,
   ChallengeParticipant,
   ChallengeInput,
   FriendInput,
@@ -384,6 +385,17 @@ export async function submitChallengeCheckIn(
   return fetchJSON(`/api/challenges/${challengeId}/check-ins`, {
     method: "POST",
     body: JSON.stringify(input),
+  });
+}
+
+export async function getChallengeMessages(challengeId: string): Promise<ChallengeGroupMessage[]> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages`);
+}
+
+export async function sendChallengeMessage(challengeId: string, content: string): Promise<ChallengeGroupMessage> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
   });
 }
 

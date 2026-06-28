@@ -31,6 +31,9 @@ const PersonalChallengeJoinDialog = lazy(() =>
 const ChallengeCheckInDialog = lazy(() =>
   import("@/components/web/challenges/ChallengeCheckInDialog").then((m) => ({ default: m.ChallengeCheckInDialog })),
 );
+const ChallengeChatDialog = lazy(() =>
+  import("@/components/web/challenges/ChallengeChatDialog").then((m) => ({ default: m.ChallengeChatDialog })),
+);
 
 function DialogFallback() {
   return null;
@@ -47,6 +50,7 @@ export function ChallengesScreenDialogs({
   selectedChallenge,
   personalJoinChallenge,
   checkInChallenge,
+  chatChallenge,
   reports,
   participants,
   onCloseChallengeDialog,
@@ -64,6 +68,7 @@ export function ChallengesScreenDialogs({
   onClosePersonalJoinDialog,
   onJoinWithPersonalGoal,
   onCloseCheckInDialog,
+  onCloseChatDialog,
 }: {
   goals: Goal[];
   challengeDialogOpen: boolean;
@@ -75,6 +80,7 @@ export function ChallengesScreenDialogs({
   selectedChallenge?: Challenge | null;
   personalJoinChallenge?: Challenge | null;
   checkInChallenge?: Challenge | null;
+  chatChallenge?: Challenge | null;
   reports: Report[];
   participants: ChallengeParticipant[];
   onCloseChallengeDialog: (open: boolean) => void;
@@ -92,6 +98,7 @@ export function ChallengesScreenDialogs({
   onClosePersonalJoinDialog: () => void;
   onJoinWithPersonalGoal: (challenge: Challenge, goal: PersonalChallengeGoalInput) => Promise<void>;
   onCloseCheckInDialog: () => void;
+  onCloseChatDialog: () => void;
 }) {
   return (
     <Suspense fallback={<DialogFallback />}>
@@ -134,6 +141,10 @@ export function ChallengesScreenDialogs({
 
       {checkInChallenge && (
         <ChallengeCheckInDialog challenge={checkInChallenge} open onOpenChange={(nextOpen) => { if (!nextOpen) onCloseCheckInDialog(); }} />
+      )}
+
+      {chatChallenge && (
+        <ChallengeChatDialog challenge={chatChallenge} open onOpenChange={(nextOpen) => { if (!nextOpen) onCloseChatDialog(); }} />
       )}
 
       {selectedChallenge && reportsDialogOpen && (

@@ -30,6 +30,7 @@ interface Props {
   onOpenParticipants?: (id: string) => void;
   onSelect?: (challenge: Challenge) => void;
   onReport?: (id: string) => void;
+  onChat?: (id: string) => void;
 }
 
 export function ChallengeCard({
@@ -43,6 +44,7 @@ export function ChallengeCard({
   onOpenParticipants,
   onSelect,
   onReport,
+  onChat,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
@@ -275,6 +277,11 @@ export function ChallengeCard({
           {onReport && isParticipant && challenge.personalGoalsEnabled && (
             <div className="flex justify-center py-2">
               <Button onClick={(event) => (event.stopPropagation(), onReport(challenge.id))}>Сдать отчёт</Button>
+            </div>
+          )}
+          {onChat && (isParticipant || isCreator) && (
+            <div className="flex justify-center py-2">
+              <Button variant="outline" onClick={(event) => (event.stopPropagation(), onChat(challenge.id))}>Общий чат</Button>
             </div>
           )}
           {!participant && onAccept && !hasStarted && !hasEnded && (

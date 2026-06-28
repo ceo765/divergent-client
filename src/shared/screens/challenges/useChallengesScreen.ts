@@ -36,6 +36,7 @@ export function useChallengesScreen(options: {
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | undefined>();
   const [personalJoinChallenge, setPersonalJoinChallenge] = useState<Challenge | null>(null);
   const [checkInChallenge, setCheckInChallenge] = useState<Challenge | null>(null);
+  const [chatChallenge, setChatChallenge] = useState<Challenge | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [participants, setParticipants] = useState<ChallengeParticipant[]>([]);
   const [paymentSyncStatus, setPaymentSyncStatus] = useState<{
@@ -248,6 +249,7 @@ export function useChallengesScreen(options: {
     selectedChallenge,
     personalJoinChallenge,
     checkInChallenge,
+    chatChallenge,
     paymentSyncStatus,
     setPaymentDialogOpen,
     setLeaveDialogOpen,
@@ -269,6 +271,8 @@ export function useChallengesScreen(options: {
     closePersonalJoinDialog: () => setPersonalJoinChallenge(null),
     openCheckInDialog: (id: string) => setCheckInChallenge(challenges.find((item) => item.id === id) ?? null),
     closeCheckInDialog: () => setCheckInChallenge(null),
+    openChatDialog: (id: string) => setChatChallenge(challenges.find((item) => item.id === id) ?? null),
+    closeChatDialog: () => setChatChallenge(null),
     selectPaymentMethod,
     kickChallengeParticipant,
     openChallengeLink,

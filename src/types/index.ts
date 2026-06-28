@@ -172,6 +172,16 @@ export interface ChallengeCheckInInput {
   tasksTomorrow: string[];
 }
 
+export interface ChallengeGroupMessage {
+  id: string;
+  challengeId: string;
+  authorId?: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  author?: Pick<User, "id" | "name" | "photoUrl"> | null;
+}
+
 export type GoalType = "TASK" | "PROGRESS";
 export type GoalPeriod = "NONE" | "DAILY" | "WEEKLY" | "MONTHLY";
 export type OnboardingStepKey =

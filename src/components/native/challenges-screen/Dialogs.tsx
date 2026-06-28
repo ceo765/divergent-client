@@ -27,6 +27,9 @@ const PersonalChallengeJoinSheet = lazy(() =>
 const ChallengeCheckInSheet = lazy(() =>
   import("@/components/native/ChallengeCheckInSheet").then((m) => ({ default: m.ChallengeCheckInSheet })),
 );
+const ChallengeChatSheet = lazy(() =>
+  import("@/components/native/ChallengeChatSheet").then((m) => ({ default: m.ChallengeChatSheet })),
+);
 
 function SheetFallback() {
   return null;
@@ -56,9 +59,11 @@ export function ChallengesScreenDialogs({
   onSelectPaymentMethod,
   personalJoinChallenge,
   checkInChallenge,
+  chatChallenge,
   onClosePersonalJoin,
   onJoinWithPersonalGoal,
   onCloseCheckIn,
+  onCloseChat,
 }: {
   acceptChallenge?: Challenge | null;
   reportsChallenge?: Challenge | null;
@@ -83,9 +88,11 @@ export function ChallengesScreenDialogs({
   onSelectPaymentMethod: (method: PaymentMethod) => Promise<boolean>;
   personalJoinChallenge?: Challenge | null;
   checkInChallenge?: Challenge | null;
+  chatChallenge?: Challenge | null;
   onClosePersonalJoin: () => void;
   onJoinWithPersonalGoal: (challenge: Challenge, goal: PersonalChallengeGoalInput) => Promise<void>;
   onCloseCheckIn: () => void;
+  onCloseChat: () => void;
 }) {
   const showReportsDialog = Boolean(reportsChallenge) && reportsDialogOpen;
   const showAcceptDialog = Boolean(acceptChallenge) && acceptDialogOpen && !showReportsDialog;
@@ -149,6 +156,10 @@ export function ChallengesScreenDialogs({
 
         {checkInChallenge && (
           <ChallengeCheckInSheet challenge={checkInChallenge} open onOpenChange={(nextOpen) => { if (!nextOpen) onCloseCheckIn(); }} />
+        )}
+
+        {chatChallenge && (
+          <ChallengeChatSheet challenge={chatChallenge} open onOpenChange={(nextOpen) => { if (!nextOpen) onCloseChat(); }} />
         )}
       </Suspense>
     </>

@@ -267,6 +267,7 @@ export function ChallengeActionsRow({
   onOpenParticipants,
   onAccept,
   onReport,
+  onChat,
 }: {
   onOpenDetails?: () => void;
   isParticipant: boolean;
@@ -280,6 +281,7 @@ export function ChallengeActionsRow({
   onOpenParticipants?: () => void;
   onAccept?: () => void;
   onReport?: () => void;
+  onChat?: () => void;
 }) {
   const { t } = useTranslation();
 
@@ -289,6 +291,7 @@ export function ChallengeActionsRow({
       {!!onOpenLink && hasLink && isParticipant && <ChallengePrimaryButton label={t("common.community")} onPress={onOpenLink} />}
       {!!onOpenParticipants && isCreator && <ChallengePrimaryButton label={t("common.participants")} onPress={onOpenParticipants} />}
       {!!onReport && isParticipant && <ChallengePrimaryButton label="Сдать отчёт" onPress={onReport} />}
+      {!!onChat && <ChallengePrimaryButton label="Общий чат" onPress={onChat} />}
       {!!onAccept && canJoin && !isParticipant && !hasStarted && !hasEnded && !isPaid && <ChallengePrimaryButton label={t("challenges.accept")} onPress={onAccept} />}
     </View>
   );

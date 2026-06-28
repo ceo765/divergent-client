@@ -34,6 +34,7 @@ export function NativeChallengeCardView({
   onOpenLink,
   onOpenParticipants,
   onReport,
+  onChat,
 }: {
   challenge: Challenge;
   focused?: boolean;
@@ -45,6 +46,7 @@ export function NativeChallengeCardView({
   onOpenLink?: (id: string) => void;
   onOpenParticipants?: (id: string) => void;
   onReport?: (id: string) => void;
+  onChat?: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const { user, getLeaderboard } = useAppStore();
@@ -175,6 +177,7 @@ export function NativeChallengeCardView({
             onOpenParticipants={onOpenParticipants ? () => onOpenParticipants(challenge.id) : undefined}
             onAccept={onAccept ? () => onAccept(challenge.id) : undefined}
             onReport={onReport && challenge.personalGoalsEnabled ? () => onReport(challenge.id) : undefined}
+            onChat={onChat && (isParticipant || isCreator) ? () => onChat(challenge.id) : undefined}
           />
 
           <ChallengeFooter challenge={challenge} />

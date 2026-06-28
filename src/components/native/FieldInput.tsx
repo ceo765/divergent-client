@@ -15,6 +15,7 @@ export function FieldInput({
   textContentType,
   multiline = false,
   numberOfLines,
+  maxLength,
 }: {
   label?: string;
   value: string;
@@ -42,6 +43,7 @@ export function FieldInput({
     | "password";
   multiline?: boolean;
   numberOfLines?: number;
+  maxLength?: number;
 }) {
   return (
     <View style={{ gap: 8 }}>
@@ -59,6 +61,7 @@ export function FieldInput({
         autoCorrect={false}
         multiline={multiline}
         numberOfLines={numberOfLines}
+        maxLength={maxLength}
         textAlignVertical={multiline ? "top" : "center"}
         style={{
           borderWidth: 1,
