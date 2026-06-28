@@ -120,17 +120,20 @@ const Config: ConfigInterface = {
         }
 
         const nextData = envResponse.data as Partial<ConfigInterface["data"]>;
+        const localApiBaseURL = import.meta.env.VITE_API_BASE_URL || "";
+        const localPublicURL = import.meta.env.VITE_APP_PUBLIC_URL || "";
+        const localTelegramBotURL = import.meta.env.VITE_TELEGRAM_BOT_URL || "";
         this.data = {
           app: {
-            publicURL: nextData.app?.publicURL || "",
+            publicURL: localPublicURL || nextData.app?.publicURL || "",
             scheme: nextData.app?.scheme || "",
           },
           api: {
             http: {
-              baseURL: nextData.api?.http?.baseURL || "",
+              baseURL: localApiBaseURL || nextData.api?.http?.baseURL || "",
             },
             telegram: {
-              twaURL: nextData.api?.telegram?.twaURL || "",
+              twaURL: localTelegramBotURL || nextData.api?.telegram?.twaURL || "",
             },
           },
         };
