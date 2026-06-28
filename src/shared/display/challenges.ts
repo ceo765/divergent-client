@@ -44,7 +44,7 @@ export function calculateChallengeProgress(goals: Goal[]) {
 export function getChallengeDerivedState(challenge: Challenge, userId?: string | null) {
   const isCreator = challenge.creatorId === userId;
   const participant = challenge.participants.find((item) => item.userId === userId);
-  const isParticipant = Boolean(participant);
+  const isParticipant = Boolean(participant && participant.status !== "REMOVED" && participant.status !== "LEFT");
   const completedGoals = challenge.goals.filter(goalCompleted).length;
   const personalTarget = participant?.targetValue ?? 0;
   const personalCurrent = participant?.currentValue ?? 0;

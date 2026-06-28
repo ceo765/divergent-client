@@ -99,3 +99,19 @@ test("does not complete an empty legacy challenge", () => {
 
   assert.equal(state.challengeStatus, "ACTIVE");
 });
+
+test("does not treat an excluded user as an active participant", () => {
+  const state = getChallengeDerivedState(
+    {
+      id: "challenge-removed",
+      creatorId: "creator-1",
+      title: "Removed participant",
+      goals: [],
+      participants: [{ userId: "user-1", status: "REMOVED", missCount: 2 }],
+    } as never,
+    "user-1",
+  );
+
+  assert.equal(state.isParticipant, false);
+  assert.equal(state.participant?.status, "REMOVED");
+});

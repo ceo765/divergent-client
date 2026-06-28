@@ -15,12 +15,14 @@ export function ChallengeCardHeader({
   challenge,
   isCreator,
   isParticipant,
+  isRemoved,
   challengeStatus,
   statusLabel,
 }: {
   challenge: Challenge;
   isCreator: boolean;
   isParticipant: boolean;
+  isRemoved: boolean;
   challengeStatus: "COMPLETED" | "FAILED" | "ACTIVE";
   statusLabel: string;
 }) {
@@ -35,6 +37,7 @@ export function ChallengeCardHeader({
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         {(isCreator && <ChallengeCardBadge>{t("common.created_by")}</ChallengeCardBadge>) ||
           (isParticipant && <ChallengeCardBadge>{t("common.participating")}</ChallengeCardBadge>)}
+        {isRemoved && <ChallengeCardBadge tone="danger">Исключён</ChallengeCardBadge>}
         {challengeStatus !== "ACTIVE" && <ChallengeCardBadge tone={challengeStatus === "COMPLETED" ? "success" : "danger"}>{statusLabel}</ChallengeCardBadge>}
       </View>
       {!!challenge.description && <Text style={{ color: appPalette.semantic.textMuted, fontSize: 12, fontWeight: "400", lineHeight: 18, fontFamily: "Montserrat" }}>{challenge.description}</Text>}
@@ -254,6 +257,7 @@ export function ChallengePriceSection({
 export function ChallengeActionsRow({
   onOpenDetails,
   isParticipant,
+  canJoin,
   isCreator,
   hasStarted,
   hasEnded,
@@ -266,6 +270,7 @@ export function ChallengeActionsRow({
 }: {
   onOpenDetails?: () => void;
   isParticipant: boolean;
+  canJoin: boolean;
   isCreator: boolean;
   hasStarted: boolean;
   hasEnded: boolean;
@@ -284,7 +289,7 @@ export function ChallengeActionsRow({
       {!!onOpenLink && hasLink && isParticipant && <ChallengePrimaryButton label={t("common.community")} onPress={onOpenLink} />}
       {!!onOpenParticipants && isCreator && <ChallengePrimaryButton label={t("common.participants")} onPress={onOpenParticipants} />}
       {!!onReport && isParticipant && <ChallengePrimaryButton label="Сдать отчёт" onPress={onReport} />}
-      {!!onAccept && !isParticipant && !hasStarted && !hasEnded && !isPaid && <ChallengePrimaryButton label={t("challenges.accept")} onPress={onAccept} />}
+      {!!onAccept && canJoin && !isParticipant && !hasStarted && !hasEnded && !isPaid && <ChallengePrimaryButton label={t("challenges.accept")} onPress={onAccept} />}
     </View>
   );
 }

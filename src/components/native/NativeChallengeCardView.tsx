@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { ProgressRing } from "@/components/shared/ProgressRing";
@@ -86,7 +86,7 @@ export function NativeChallengeCardView({
   return (
     <View
       style={{
-        opacity: (hasEnded || hasStarted) && !isParticipant ? 0.6 : 1,
+        opacity: (hasEnded || hasStarted || participant?.status === "REMOVED") && !isParticipant ? 0.6 : 1,
         backgroundColor: highlight ? appPalette.semantic.infoSurfaceStrong : "transparent",
         borderRadius: 12,
       }}
@@ -97,6 +97,7 @@ export function NativeChallengeCardView({
               challenge={challenge}
               isCreator={isCreator}
               isParticipant={isParticipant}
+              isRemoved={participant?.status === "REMOVED"}
               challengeStatus={challengeStatus}
               statusLabel={statusLabel}
             />
@@ -119,6 +120,15 @@ export function NativeChallengeCardView({
               progress={progress}
               unit={participant?.unit || challenge.metricUnit || ""}
             />
+          )}
+
+          {isParticipant && participant && participant.missCount > 0 && (
+            <View style={{ borderWidth: 1, borderColor: appPalette.semantic.warningBorder, backgroundColor: appPalette.semantic.warningSurface, borderRadius: 12, padding: 12 }}>
+              <Text style={{ color: appPalette.semantic.warningText, fontSize: 12, lineHeight: 18, fontFamily: "Montserrat" }}>
+                Пропуски: {participant.missCount} из {challenge.allowedMisses ?? 1} допустимых.
+                {participant.missCount >= (challenge.allowedMisses ?? 1) ? " Следующий пропуск приведёт к исключению." : ""}
+              </Text>
+            </View>
           )}
 
           {isParticipant && !challenge.personalGoalsEnabled && (
@@ -155,6 +165,7 @@ export function NativeChallengeCardView({
           <ChallengeActionsRow
             onOpenDetails={onSelect ? () => onSelect(challenge) : undefined}
             isParticipant={isParticipant}
+            canJoin={!participant}
             isCreator={isCreator}
             hasStarted={hasStarted}
             hasEnded={hasEnded}

@@ -99,7 +99,7 @@ export function ChallengeCard({
       className={`
         mb-2 break-inside-avoid
         hover:shadow-md transition-all
-        ${(hasEnded || hasStarted) && !isParticipant ? "opacity-60" : ""}
+        ${(hasEnded || hasStarted || participant?.status === "REMOVED") && !isParticipant ? "opacity-60" : ""}
       `}
     >
       <CardHeader>
@@ -112,6 +112,7 @@ export function ChallengeCard({
             <div className="flex flex-wrap gap-2">
               {(isCreator && <Badge variant="outline">{t("common.created_by")}</Badge>) ||
                 (isParticipant && <Badge variant="outline">{t("common.participating")}</Badge>)}
+              {participant?.status === "REMOVED" && <Badge variant="destructive">Исключён</Badge>}
               {challengeStatus !== "ACTIVE" && (
                 <Badge
                   className={
@@ -162,6 +163,13 @@ export function ChallengeCard({
               </span>
             </div>
             <Progress value={progress * 100} className="h-2" />
+          </div>
+        )}
+
+        {isParticipant && participant && participant.missCount > 0 && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            Пропуски: {participant.missCount} из {challenge.allowedMisses ?? 1} допустимых.
+            {participant.missCount >= (challenge.allowedMisses ?? 1) && " Следующий пропуск приведёт к исключению."}
           </div>
         )}
 
@@ -269,7 +277,7 @@ export function ChallengeCard({
               <Button onClick={(event) => (event.stopPropagation(), onReport(challenge.id))}>Сдать отчёт</Button>
             </div>
           )}
-          {!isParticipant && onAccept && !hasStarted && !hasEnded && (
+          {!participant && onAccept && !hasStarted && !hasEnded && (
             <div className="flex justify-center py-2">
               <Button
                 className="bg-blue-600 text-white hover:bg-blue-700"
