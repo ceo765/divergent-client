@@ -78,6 +78,7 @@ export function ChallengesScreenContent({
   onLeave,
   onOpenLink,
   onOpenParticipants,
+  onReport,
 }: {
   challenges: Challenge[];
   focusedChallengeId?: string | null;
@@ -89,6 +90,7 @@ export function ChallengesScreenContent({
   onLeave: (id: string) => void;
   onOpenLink: (id: string) => void;
   onOpenParticipants: (id: string) => void;
+  onReport: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const scrollRef = useRef<ScrollView | null>(null);
@@ -135,6 +137,7 @@ export function ChallengesScreenContent({
               onLeave={onLeave}
               onOpenLink={onOpenLink}
               onOpenParticipants={onOpenParticipants}
+              onReport={onReport}
             />
           </View>
         ))

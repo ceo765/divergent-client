@@ -399,6 +399,50 @@ export function ChallengeReportsSection(props: { requiresReport: boolean; onChan
   );
 }
 
+export function ChallengeFoundationSection(props: {
+  personalGoalsEnabled: boolean;
+  metricName: string;
+  metricUnit: string;
+  reportDeadline: string;
+  reportTimeZone: string;
+  allowedMisses: string;
+  reportingDays: string[];
+  onChangePersonalGoalsEnabled: (value: boolean) => void;
+  onChangeMetricName: (value: string) => void;
+  onChangeMetricUnit: (value: string) => void;
+  onChangeReportDeadline: (value: string) => void;
+  onChangeReportTimeZone: (value: string) => void;
+  onChangeAllowedMisses: (value: string) => void;
+  onToggleReportingDay: (value: string) => void;
+}) {
+  return (
+    <View style={{ gap: 12, borderWidth: 1, borderColor: appPalette.semantic.borderSubtle, borderRadius: 16, padding: 14 }}>
+      <Text style={{ ...formSectionLabelStyle, fontSize: 16 }}>Личные цели и отчёты</Text>
+      <Text style={{ color: appPalette.semantic.textMuted, fontFamily: "Montserrat", fontSize: 12, lineHeight: 18 }}>
+        Каждый участник задаёт свой результат, а форма отчёта и сроки остаются общими.
+      </Text>
+      <SectionTabs
+        tabs={[{ key: "personal", label: "Личные цели" }, { key: "shared", label: "Общие цели" }]}
+        activeTab={props.personalGoalsEnabled ? "personal" : "shared"}
+        onChange={(tab) => props.onChangePersonalGoalsEnabled(tab === "personal")}
+      />
+      <FieldInput label="Что измеряем" value={props.metricName} onChangeText={props.onChangeMetricName} placeholder="Выручка, страницы, тренировки" />
+      <FieldInput label="Единица результата" value={props.metricUnit} onChangeText={props.onChangeMetricUnit} placeholder="₽, страниц, дней" />
+      <FieldInput label="Отчёт до" value={props.reportDeadline} onChangeText={props.onChangeReportDeadline} placeholder="23:00" />
+      <FieldInput label="Часовой пояс" value={props.reportTimeZone} onChangeText={props.onChangeReportTimeZone} placeholder="Europe/Moscow" autoCapitalize="none" />
+      <FieldInput label="Допустимо пропусков" value={props.allowedMisses} onChangeText={props.onChangeAllowedMisses} keyboardType="numeric" />
+      <View style={{ gap: 8 }}>
+        <Text style={formSectionLabelStyle}>Дни отчётности</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {[["mon","Пн"],["tue","Вт"],["wed","Ср"],["thu","Чт"],["fri","Пт"],["sat","Сб"],["sun","Вс"]].map(([value, label]) => (
+            <ActionChip key={value} tone={props.reportingDays.includes(value) ? "primary" : "secondary"} onPress={() => props.onToggleReportingDay(value)}>{label}</ActionChip>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export function ChallengeGoalsSection(props: {
   goals: Goal[];
   selectedGoalIds: string[];

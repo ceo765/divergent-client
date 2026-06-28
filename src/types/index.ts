@@ -76,6 +76,13 @@ export interface Challenge {
   goalIds: string[];
   leaderboard: Leader[];
   requiresReport: boolean;
+  personalGoalsEnabled?: boolean;
+  metricName?: string;
+  metricUnit?: string;
+  reportingDays?: string[];
+  reportDeadline?: string;
+  reportTimeZone?: string;
+  allowedMisses?: number;
   creatorId: string;
   rules?: string;
   link?: string;
@@ -125,6 +132,44 @@ export interface ChallengeParticipant {
   userId: string;
   challenge: Challenge;
   user: User;
+  goalTitle?: string;
+  targetValue?: number;
+  currentValue: number;
+  unit?: string;
+  onboardingAnswers?: Record<string, unknown>;
+  plan?: Record<string, unknown>;
+  status: "ACTIVE" | "LEFT" | "REMOVED";
+  missCount: number;
+}
+
+export interface PersonalChallengeGoalInput {
+  goalTitle: string;
+  targetValue: number;
+  currentValue: number;
+  unit: string;
+  onboardingAnswers?: Record<string, unknown>;
+  plan?: Record<string, unknown>;
+}
+
+export interface ChallengeCheckIn {
+  id: string;
+  challengeId: string;
+  participantId: string;
+  userId: string;
+  reportDate: string;
+  planValue?: number;
+  factValue?: number;
+  doneToday: string[];
+  tasksTomorrow: string[];
+  submittedAt: string;
+  isLate: boolean;
+  user: Pick<User, "id" | "name" | "photoUrl">;
+}
+
+export interface ChallengeCheckInInput {
+  factValue: number;
+  doneToday: string[];
+  tasksTomorrow: string[];
 }
 
 export type GoalType = "TASK" | "PROGRESS";

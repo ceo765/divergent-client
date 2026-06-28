@@ -43,10 +43,18 @@ export function CreateChallengeDialog({
   const [link, setLink] = useState("");
   const [price, setPrice] = useState("");
   const [isPublic, setIsPublic] = useState(true);
-  const [requiresReport, setRequiresReport] = useState(false);
+  const [requiresReport, setRequiresReport] = useState(true);
+  const [personalGoalsEnabled, setPersonalGoalsEnabled] = useState(true);
+  const [metricName, setMetricName] = useState("Результат");
+  const [metricUnit, setMetricUnit] = useState("");
+  const [reportingDays, setReportingDays] = useState<string[]>(["mon", "tue", "wed", "thu", "fri"]);
+  const [reportDeadline, setReportDeadline] = useState("23:00");
+  const [reportTimeZone, setReportTimeZone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+  const [allowedMisses, setAllowedMisses] = useState("1");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [selectedGoals, setSelectedGoals] = useState<{ label: string; value: string }[]>([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -59,6 +67,13 @@ export function CreateChallengeDialog({
       setPrice(challenge.price ? String(challenge.price) : "");
       setIsPublic(challenge.isPublic);
       setRequiresReport(challenge.requiresReport);
+      setPersonalGoalsEnabled(challenge.personalGoalsEnabled ?? false);
+      setMetricName(challenge.metricName ?? "Результат");
+      setMetricUnit(challenge.metricUnit ?? "");
+      setReportingDays(challenge.reportingDays ?? []);
+      setReportDeadline(challenge.reportDeadline ?? "23:00");
+      setReportTimeZone(challenge.reportTimeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC");
+      setAllowedMisses(String(challenge.allowedMisses ?? 1));
       setStartsAt(challenge.startsAt?.slice(0, 10) ?? "");
       setEndsAt(challenge.endsAt?.slice(0, 10) ?? "");
       setSelectedGoals(
@@ -77,10 +92,18 @@ export function CreateChallengeDialog({
     setLink("");
     setPrice("");
     setIsPublic(true);
-    setRequiresReport(false);
+    setRequiresReport(true);
+    setPersonalGoalsEnabled(true);
+    setMetricName("Результат");
+    setMetricUnit("");
+    setReportingDays(["mon", "tue", "wed", "thu", "fri"]);
+    setReportDeadline("23:00");
+    setReportTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+    setAllowedMisses("1");
     setStartsAt("");
     setEndsAt("");
     setSelectedGoals([]);
+    setError("");
   };
 
   const handleSubmit = async () => {
@@ -88,6 +111,7 @@ export function CreateChallengeDialog({
 
     setLoading(true);
     try {
+      setError("");
       await onSave({
         id: challenge?.id || "",
         title: title.trim(),
@@ -97,13 +121,22 @@ export function CreateChallengeDialog({
         isPublic,
         reports: [], // FIXME
         requiresReport,
-        price: Number(price),
+        personalGoalsEnabled,
+        metricName: metricName.trim() || "Результат",
+        metricUnit: metricUnit.trim() || undefined,
+        reportingDays,
+        reportDeadline: reportDeadline || undefined,
+        reportTimeZone,
+        allowedMisses: Math.max(0, Number(allowedMisses) || 0),
+        price: personalGoalsEnabled ? 0 : Number(price),
         startsAt: startsAt || undefined,
         endsAt: endsAt || undefined,
         goalIds: selectedGoals.map((g) => g.value),
       });
 
       onOpenChange(false);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Не удалось сохранить челлендж. Проверьте данные и попробуйте ещё раз.");
     } finally {
       setLoading(false);
     }
@@ -160,7 +193,7 @@ export function CreateChallengeDialog({
             />
           </div>
 
-          <div className="space-y-2">
+          {!personalGoalsEnabled && <div className="space-y-2">
             <Label htmlFor="price">{t("challenges.fields.price")}</Label>
             <Input
               placeholder={t("challenges.fields.price")}
@@ -169,7 +202,7 @@ export function CreateChallengeDialog({
               type="number"
               onChange={(e) => setPrice(e.target.value)}
             />
-          </div>
+          </div>}
 
           <div className="space-y-2">
             <Label htmlFor="visibility">{t("challenges.fields.visibility")}</Label>
@@ -209,7 +242,74 @@ export function CreateChallengeDialog({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="rounded-lg border p-4 space-y-4">
+            <div className="flex items-start gap-3">
+              <input
+                id="personalGoalsEnabled"
+                type="checkbox"
+                className="mt-1 size-4"
+                checked={personalGoalsEnabled}
+                onChange={(event) => {
+                  setPersonalGoalsEnabled(event.target.checked);
+                  if (event.target.checked) setRequiresReport(true);
+                }}
+              />
+              <div>
+                <Label htmlFor="personalGoalsEnabled">Личная цель для каждого участника</Label>
+                <p className="text-xs text-muted-foreground">
+                  Участник задаёт собственный результат, а правила и форма отчёта остаются общими.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="metricName">Что измеряем</Label>
+                <Input id="metricName" value={metricName} onChange={(event) => setMetricName(event.target.value)} placeholder="Выручка, страницы, тренировки" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="metricUnit">Единица результата</Label>
+                <Input id="metricUnit" value={metricUnit} onChange={(event) => setMetricUnit(event.target.value)} placeholder="₽, страниц, дней" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="reportDeadline">Отчёт до</Label>
+                <Input id="reportDeadline" type="time" value={reportDeadline} onChange={(event) => setReportDeadline(event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reportTimeZone">Часовой пояс</Label>
+                <Input id="reportTimeZone" value={reportTimeZone} onChange={(event) => setReportTimeZone(event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="allowedMisses">Допустимо пропусков</Label>
+                <Input id="allowedMisses" type="number" min="0" value={allowedMisses} onChange={(event) => setAllowedMisses(event.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Дни отчётности</Label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  ["mon", "Пн"], ["tue", "Вт"], ["wed", "Ср"], ["thu", "Чт"],
+                  ["fri", "Пт"], ["sat", "Сб"], ["sun", "Вс"],
+                ].map(([value, label]) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    size="sm"
+                    variant={reportingDays.includes(value) ? "default" : "outline"}
+                    onClick={() => setReportingDays((current) => current.includes(value) ? current.filter((day) => day !== value) : [...current, value])}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {!personalGoalsEnabled && <div className="space-y-2">
             <Label htmlFor="goals">{t("challenges.fields.goals")}</Label>
             <Select
               id="goals"
@@ -220,7 +320,7 @@ export function CreateChallengeDialog({
               onChange={(values) => setSelectedGoals(values as { value: string; label: string }[])}
               placeholder={t("challenges.fields.select_goals")}
             />
-          </div>
+          </div>}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -238,6 +338,8 @@ export function CreateChallengeDialog({
           </div>
         </div>
 
+        {!!error && <p className="text-sm text-destructive">{error}</p>}
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("common.cancel")}
@@ -250,7 +352,3 @@ export function CreateChallengeDialog({
     </Dialog>
   );
 }
-
-
-
-

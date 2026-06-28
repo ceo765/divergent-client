@@ -68,6 +68,28 @@ export function ChallengeProgressSection({
   );
 }
 
+export function ChallengePersonalProgressSection({ challenge, currentValue, targetValue, progress, unit }: {
+  challenge: Challenge;
+  currentValue: number;
+  targetValue: number;
+  progress: number;
+  unit: string;
+}) {
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+        <Text style={{ color: appPalette.semantic.textMuted, fontSize: 12, fontFamily: "Montserrat" }}>{challenge.metricName || "Результат"}</Text>
+        <Text style={{ color: appPalette.semantic.textStrong, fontSize: 12, fontWeight: "600", fontFamily: "Montserrat" }}>
+          {currentValue.toLocaleString("ru-RU")} / {targetValue.toLocaleString("ru-RU")} {unit}
+        </Text>
+      </View>
+      <View style={{ height: 8, backgroundColor: appPalette.semantic.borderSubtle, borderRadius: 999, overflow: "hidden" }}>
+        <View style={{ width: `${progress * 100}%`, height: "100%", backgroundColor: appPalette.brand.primary }} />
+      </View>
+    </View>
+  );
+}
+
 export function ChallengeGoalsSection({
   focused,
   isOpen,
@@ -240,6 +262,7 @@ export function ChallengeActionsRow({
   onOpenLink,
   onOpenParticipants,
   onAccept,
+  onReport,
 }: {
   onOpenDetails?: () => void;
   isParticipant: boolean;
@@ -251,6 +274,7 @@ export function ChallengeActionsRow({
   onOpenLink?: () => void;
   onOpenParticipants?: () => void;
   onAccept?: () => void;
+  onReport?: () => void;
 }) {
   const { t } = useTranslation();
 
@@ -259,6 +283,7 @@ export function ChallengeActionsRow({
       {!!onOpenDetails && <ChallengePrimaryButton label={t("common.details")} onPress={onOpenDetails} />}
       {!!onOpenLink && hasLink && isParticipant && <ChallengePrimaryButton label={t("common.community")} onPress={onOpenLink} />}
       {!!onOpenParticipants && isCreator && <ChallengePrimaryButton label={t("common.participants")} onPress={onOpenParticipants} />}
+      {!!onReport && isParticipant && <ChallengePrimaryButton label="Сдать отчёт" onPress={onReport} />}
       {!!onAccept && !isParticipant && !hasStarted && !hasEnded && !isPaid && <ChallengePrimaryButton label={t("challenges.accept")} onPress={onAccept} />}
     </View>
   );

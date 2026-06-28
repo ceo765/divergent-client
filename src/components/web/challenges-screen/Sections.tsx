@@ -32,6 +32,7 @@ export function ChallengesScreenContent({
   onOpenLink,
   onOpenParticipants,
   onAccept,
+  onReport,
 }: {
   challenges: Challenge[];
   focusId?: string | null;
@@ -43,6 +44,7 @@ export function ChallengesScreenContent({
   onOpenLink: (id: string) => void;
   onOpenParticipants: (id: string) => Promise<boolean>;
   onAccept: (id: string) => Promise<{ status: "accepted" | "payment_required" | "ignored" }>;
+  onReport: (id: string) => void;
 }) {
   const { t } = useTranslation();
 
@@ -74,6 +76,7 @@ export function ChallengesScreenContent({
           onOpenLink={onOpenLink}
           onOpenParticipants={onOpenParticipants}
           onAccept={onAccept}
+          onReport={onReport}
         />
       ))}
     </div>

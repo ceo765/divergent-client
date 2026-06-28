@@ -29,6 +29,7 @@ interface Props {
   onOpenLink?: (id: string) => void;
   onOpenParticipants?: (id: string) => void;
   onSelect?: (challenge: Challenge) => void;
+  onReport?: (id: string) => void;
 }
 
 export function ChallengeCard({
@@ -41,6 +42,7 @@ export function ChallengeCard({
   onOpenLink,
   onOpenParticipants,
   onSelect,
+  onReport,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
@@ -59,6 +61,7 @@ export function ChallengeCard({
     hasStarted,
     isCreator,
     isParticipant,
+    participant,
     progress,
   } = getChallengeDerivedState(challenge, user!.id);
 
@@ -150,7 +153,19 @@ export function ChallengeCard({
       </CardHeader>
 
       <CardContent className="space-y-2">
-        {isParticipant && (
+        {isParticipant && challenge.personalGoalsEnabled && (
+          <div className="space-y-2 pb-2">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">{challenge.metricName || "Результат"}</span>
+              <span className="font-medium">
+                {(participant?.currentValue ?? 0).toLocaleString("ru-RU")} / {(participant?.targetValue ?? 0).toLocaleString("ru-RU")} {participant?.unit || challenge.metricUnit || ""}
+              </span>
+            </div>
+            <Progress value={progress * 100} className="h-2" />
+          </div>
+        )}
+
+        {isParticipant && !challenge.personalGoalsEnabled && (
           <div className="pb-2">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-muted-foreground">{t("goals.progress")}</span>
@@ -162,7 +177,7 @@ export function ChallengeCard({
           </div>
         )}
 
-        <Collapsible open={isGoalsOpen} onOpenChange={setIsGoalsOpen}>
+        {!challenge.personalGoalsEnabled && <Collapsible open={isGoalsOpen} onOpenChange={setIsGoalsOpen}>
           <CollapsibleTrigger asChild>
             <Button variant="transparent" className="w-full justify-between" onClick={(e) => e.stopPropagation()}>
               <span>{t("challenges.goals")}</span>
@@ -181,7 +196,7 @@ export function ChallengeCard({
               </div>
             ))}
           </CollapsibleContent>
-        </Collapsible>
+        </Collapsible>}
 
         {challenge.rules && (
           <Collapsible open={isRulesOpen} onOpenChange={setIsRulesOpen}>
@@ -249,6 +264,11 @@ export function ChallengeCard({
               </Button>
             </div>
           )}
+          {onReport && isParticipant && challenge.personalGoalsEnabled && (
+            <div className="flex justify-center py-2">
+              <Button onClick={(event) => (event.stopPropagation(), onReport(challenge.id))}>Сдать отчёт</Button>
+            </div>
+          )}
           {!isParticipant && onAccept && !hasStarted && !hasEnded && (
             <div className="flex justify-center py-2">
               <Button
@@ -283,5 +303,3 @@ export function ChallengeCard({
     </Card>
   );
 }
-
-

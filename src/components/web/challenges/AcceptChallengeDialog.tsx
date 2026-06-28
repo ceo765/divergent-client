@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import type { Challenge, Leader } from "@/types";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "@/stores/useAppStore.ts";
+import { getChallengeDerivedState } from "@/shared/display/challenges";
 
 interface ChallengeDialogProps {
   challenge: Challenge;
@@ -34,34 +35,9 @@ export function AcceptChallengeDialog({ challenge, isOpen, onOpenChange, onAccep
   const { user, getLeaderboard } = useAppStore();
 
   const totalGoals = challenge.goals.length;
-  const completedGoals = challenge.goals.filter((goal) => goal.lastCompletedAt).length;
-  const progress = totalGoals === 0 ? 0 : completedGoals / totalGoals;
-  const goals = challenge.goals;
-  const isParticipant = challenge.participants.some((participant) => participant.userId === user!.id);
+  const derivedState = getChallengeDerivedState(challenge, user!.id);
+  const { challengeStatus, hasEnded, hasStarted, isParticipant, participant, progress } = derivedState;
 
-  const getGoalStatus = (goal: (typeof goals)[0]) => {
-    return goal.lastCompletedAt ? "COMPLETED" : "NOT_COMPLETED";
-  };
-
-  const allGoalsCompleted = goals.every((goal) => getGoalStatus(goal) === "COMPLETED");
-  let challengeStatus: "COMPLETED" | "FAILED" | "ACTIVE";
-
-  const now = new Date();
-  const challengeStart = challenge.startsAt ? new Date(challenge.startsAt) : null;
-  const challengeEnd = challenge.endsAt ? new Date(challenge.endsAt) : null;
-
-  const hasStarted = challengeStart ? new Date(challengeStart.getTime() + 24 * 60 * 60 * 1000) <= now : false;
-  const hasEnded = challengeEnd ? new Date(challengeEnd.getTime() + 24 * 60 * 60 * 1000) <= now : false;
-
-  if (!isParticipant) {
-    challengeStatus = "ACTIVE";
-  } else if (allGoalsCompleted) {
-    challengeStatus = "COMPLETED";
-  } else if (challenge.endsAt && new Date(challenge.endsAt) < now) {
-    challengeStatus = "FAILED";
-  } else {
-    challengeStatus = "ACTIVE";
-  }
 
   const onLeaderboardClick = async (id: string) => {
     if (isLeaderboardOpen) {
@@ -129,6 +105,14 @@ export function AcceptChallengeDialog({ challenge, isOpen, onOpenChange, onAccep
         </div>
 
         <div className="flex flex-col gap-2">
+          {challenge.personalGoalsEnabled && isParticipant && (
+            <div className="flex justify-between rounded-md border p-2 text-sm font-medium">
+              <span>{challenge.metricName || "Результат"}</span>
+              <span>
+                {(participant?.currentValue ?? 0).toLocaleString("ru-RU")} / {(participant?.targetValue ?? 0).toLocaleString("ru-RU")} {participant?.unit || challenge.metricUnit || ""}
+              </span>
+            </div>
+          )}
           {totalGoals > 0 && (
             <Collapsible open={showGoals} onOpenChange={setShowGoals} className="mt-2">
               <CollapsibleTrigger asChild>
@@ -225,7 +209,4 @@ export function AcceptChallengeDialog({ challenge, isOpen, onOpenChange, onAccep
     </Dialog>
   );
 }
-
-
-
 

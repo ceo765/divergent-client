@@ -5,6 +5,7 @@ import type {
   CategoryOption,
   Challenge,
   ChallengeParticipant,
+  PersonalChallengeGoalInput,
   ChatMessage,
   FriendInput,
   FriendSummary,
@@ -75,6 +76,7 @@ export interface AppStoreActions {
   updateChallenge: (challenge: ChallengeInput) => Promise<void>;
   getLeaderboard: (id: string) => Promise<Leader[]>;
   acceptChallenge: (challenge: Challenge) => Promise<void>;
+  joinChallengeWithPersonalGoal: (challenge: Challenge, goal: PersonalChallengeGoalInput) => Promise<void>;
   leaveChallenge: (id: string) => Promise<void>;
   payChallenge: (challenge: Challenge, method: PaymentMethod) => Promise<void>;
   syncPaymentStatus: (paymentId: string) => Promise<"PENDING" | "SUCCESS" | "FAILED" | "CANCELLED">;
@@ -118,4 +120,3 @@ export interface AppStoreActions {
 export type AppStore = AppStoreState & AuthSlice & AppStoreActions;
 
 export type StoreSlice<T> = StateCreator<AppStore, [], [], T>;
-

@@ -17,6 +17,7 @@ import {
   ChallengeGoalsSection,
   ChallengeLeaderboardSection,
   ChallengePriceSection,
+  ChallengePersonalProgressSection,
   ChallengeProgressSection,
   ChallengeRulesSection,
 } from "./challenge-card/Sections";
@@ -32,6 +33,7 @@ export function NativeChallengeCardView({
   onLeave,
   onOpenLink,
   onOpenParticipants,
+  onReport,
 }: {
   challenge: Challenge;
   focused?: boolean;
@@ -42,6 +44,7 @@ export function NativeChallengeCardView({
   onLeave?: (id: string) => void;
   onOpenLink?: (id: string) => void;
   onOpenParticipants?: (id: string) => void;
+  onReport?: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const { user, getLeaderboard } = useAppStore();
@@ -51,7 +54,7 @@ export function NativeChallengeCardView({
   const [leaderboard, setLeaderboard] = useState<Leader[]>([]);
   const [highlight, setHighlight] = useState(focused);
 
-  const { isCreator, isParticipant, completedGoals, progress, hasStarted, hasEnded, challengeStatus } = getChallengeDerivedState(challenge, user?.id);
+  const { isCreator, isParticipant, participant, completedGoals, progress, hasStarted, hasEnded, challengeStatus } = getChallengeDerivedState(challenge, user?.id);
   const statusLabel =
     challengeStatus === "COMPLETED"
       ? t("challenges.status_completed")
@@ -108,7 +111,17 @@ export function NativeChallengeCardView({
             </View>
           </View>
 
-          {isParticipant && (
+          {isParticipant && challenge.personalGoalsEnabled && (
+            <ChallengePersonalProgressSection
+              challenge={challenge}
+              currentValue={participant?.currentValue ?? 0}
+              targetValue={participant?.targetValue ?? 0}
+              progress={progress}
+              unit={participant?.unit || challenge.metricUnit || ""}
+            />
+          )}
+
+          {isParticipant && !challenge.personalGoalsEnabled && (
             <ChallengeProgressSection
               progress={progress}
               completedGoals={completedGoals}
@@ -116,13 +129,13 @@ export function NativeChallengeCardView({
             />
           )}
 
-          <ChallengeGoalsSection
+          {!challenge.personalGoalsEnabled && <ChallengeGoalsSection
             focused={focused}
             isOpen={isGoalsOpen}
             goals={challenge.goals}
             canOpenGoals={isParticipant}
             onToggleOpen={() => setIsGoalsOpen((current) => !current)}
-          />
+          />}
 
           <ChallengeRulesSection
             rules={challenge.rules}
@@ -150,6 +163,7 @@ export function NativeChallengeCardView({
             onOpenLink={onOpenLink ? () => onOpenLink(challenge.id) : undefined}
             onOpenParticipants={onOpenParticipants ? () => onOpenParticipants(challenge.id) : undefined}
             onAccept={onAccept ? () => onAccept(challenge.id) : undefined}
+            onReport={onReport && challenge.personalGoalsEnabled ? () => onReport(challenge.id) : undefined}
           />
 
           <ChallengeFooter challenge={challenge} />

@@ -2,29 +2,45 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import dayjs from "dayjs";
+import type { GoalActivity } from "../../../types/index.ts";
 
-import { buildProgressActivityView, getActivityCellStatus } from "./model";
+import { buildProgressActivityView, getActivityCellStatus } from "./model.ts";
 
-const makeActivity = () =>
-  ({
+const makeWeeklyActivity = (): GoalActivity => {
+  const previousWeek = dayjs().subtract(1, "week").startOf("isoWeek");
+  const currentWeek = dayjs().startOf("isoWeek");
+
+  return {
     currentStreak: 0,
     longestStreak: 0,
     period: "DAILY",
     data: [
-      { periodStart: "2026-06-01", completed: 1, total: 2, status: "partial", xp: 5 },
-      { periodStart: "2026-06-02", completed: 1, total: 2, status: "partial", xp: 5 },
-      { periodStart: "2026-06-08", completed: 2, total: 2, status: "full", xp: 10 },
-      { periodStart: "2026-06-09", completed: 2, total: 2, status: "full", xp: 10 },
+      { periodStart: previousWeek.format("YYYY-MM-DD"), completed: 1, total: 2, status: "partial", xp: 5 },
+      { periodStart: previousWeek.add(1, "day").format("YYYY-MM-DD"), completed: 1, total: 2, status: "partial", xp: 5 },
+      { periodStart: currentWeek.format("YYYY-MM-DD"), completed: 1, total: 2, status: "partial", xp: 5 },
+      { periodStart: currentWeek.add(1, "day").format("YYYY-MM-DD"), completed: 1, total: 2, status: "partial", xp: 5 },
     ],
-  }) as never;
+  };
+};
+
+const makeMonthlyActivity = (): GoalActivity => {
+  const month = dayjs().startOf("month");
+  return {
+    currentStreak: 0,
+    longestStreak: 0,
+    period: "DAILY",
+    data: [
+      { periodStart: month.add(1, "day").format("YYYY-MM-DD"), completed: 1, total: 2, status: "partial", xp: 5 },
+      { periodStart: month.add(2, "day").format("YYYY-MM-DD"), completed: 1, total: 2, status: "partial", xp: 5 },
+    ],
+  };
+};
 
 test("groups weekly activity into one shared bucket for coloring", () => {
-  const view = buildProgressActivityView(makeActivity(), "WEEKLY", "en");
+  const activity = makeWeeklyActivity();
+  const view = buildProgressActivityView(activity, "WEEKLY", "en");
 
-  assert.equal(view.dateStatusMap.get("2026-06-01"), "full");
-  assert.equal(view.dateStatusMap.get("2026-06-02"), "full");
-  assert.equal(view.dateStatusMap.get("2026-06-08"), "full");
-  assert.equal(view.dateStatusMap.get("2026-06-09"), "full");
+  for (const item of activity.data) assert.equal(view.dateStatusMap.get(item.periodStart), "full");
   assert.equal(view.currentStreak, 2);
   assert.equal(view.longestStreak, 2);
   assert.deepEqual(view.streakItems.map((item) => item.active), [false, false, false, false, false, true, true]);
@@ -32,12 +48,10 @@ test("groups weekly activity into one shared bucket for coloring", () => {
 });
 
 test("groups monthly activity into one shared bucket for coloring", () => {
-  const view = buildProgressActivityView(makeActivity(), "MONTHLY", "ru");
+  const activity = makeMonthlyActivity();
+  const view = buildProgressActivityView(activity, "MONTHLY", "ru");
 
-  assert.equal(view.dateStatusMap.get("2026-06-01"), "full");
-  assert.equal(view.dateStatusMap.get("2026-06-02"), "full");
-  assert.equal(view.dateStatusMap.get("2026-06-08"), "full");
-  assert.equal(view.dateStatusMap.get("2026-06-09"), "full");
+  for (const item of activity.data) assert.equal(view.dateStatusMap.get(item.periodStart), "full");
   assert.equal(view.currentStreak, 1);
   assert.equal(view.longestStreak, 1);
   assert.equal(view.streakItems.length, 7);
@@ -52,13 +66,13 @@ test("marks missed periods red only after goal creation and outside the current 
     goalType: "TASK",
     goalPeriod: "WEEKLY",
     tasks: [],
-    createdAt: "2026-05-20T10:00:00.000Z",
+    createdAt: dayjs().subtract(2, "week").toISOString(),
   } as never;
 
   const dateStatusMap = new Map<string, "empty" | "partial" | "full">();
-  const missedDay = dayjs("2026-05-28T12:00:00.000Z");
-  const beforeCreationDay = dayjs("2026-05-18T12:00:00.000Z");
-  const currentPeriodDay = dayjs("2026-06-04T12:00:00.000Z");
+  const missedDay = dayjs().subtract(1, "week");
+  const beforeCreationDay = dayjs().subtract(3, "week");
+  const currentPeriodDay = dayjs();
 
   assert.equal(getActivityCellStatus(missedDay, goal, dateStatusMap), "missed");
   assert.equal(getActivityCellStatus(beforeCreationDay, goal, dateStatusMap), "empty");

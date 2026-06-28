@@ -43,10 +43,17 @@ export function calculateChallengeProgress(goals: Goal[]) {
 
 export function getChallengeDerivedState(challenge: Challenge, userId?: string | null) {
   const isCreator = challenge.creatorId === userId;
-  const isParticipant = challenge.participants.some((participant) => participant.userId === userId);
+  const participant = challenge.participants.find((item) => item.userId === userId);
+  const isParticipant = Boolean(participant);
   const completedGoals = challenge.goals.filter(goalCompleted).length;
-  const progress = calculateChallengeProgress(challenge.goals);
-  const allGoalsCompleted = challenge.goals.every(goalCompleted);
+  const personalTarget = participant?.targetValue ?? 0;
+  const personalCurrent = participant?.currentValue ?? 0;
+  const progress = challenge.personalGoalsEnabled
+    ? personalTarget > 0 ? Math.min(personalCurrent / personalTarget, 1) : 0
+    : calculateChallengeProgress(challenge.goals);
+  const completed = challenge.personalGoalsEnabled
+    ? personalTarget > 0 && personalCurrent >= personalTarget
+    : challenge.goals.length > 0 && challenge.goals.every(goalCompleted);
   const now = new Date();
   const challengeStart = challenge.startsAt ? new Date(challenge.startsAt) : null;
   const challengeEnd = challenge.endsAt ? new Date(challenge.endsAt) : null;
@@ -58,7 +65,7 @@ export function getChallengeDerivedState(challenge: Challenge, userId?: string |
     : false;
   const challengeStatus: "COMPLETED" | "FAILED" | "ACTIVE" = !isParticipant
     ? "ACTIVE"
-    : allGoalsCompleted
+    : completed
       ? "COMPLETED"
       : challenge.endsAt && new Date(challenge.endsAt) < now
         ? "FAILED"
@@ -67,6 +74,7 @@ export function getChallengeDerivedState(challenge: Challenge, userId?: string |
   return {
     isCreator,
     isParticipant,
+    participant,
     completedGoals,
     progress,
     hasStarted,

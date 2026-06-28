@@ -7,6 +7,9 @@ import type {
   AIChatResponse,
   Challenge,
   ChallengeApi,
+  ChallengeCheckIn,
+  ChallengeCheckInInput,
+  ChallengeParticipant,
   ChallengeInput,
   FriendInput,
   FriendSummary,
@@ -16,6 +19,7 @@ import type {
   ReportUploadPayload,
   Reward,
   User,
+  PersonalChallengeGoalInput,
 } from "@/types";
 
 const API_TIMEOUT_MS = 15000;
@@ -342,6 +346,44 @@ export async function getReports(challengeId: string) {
 export async function getParticipants(challengeId: string) {
   return await fetchJSON(`/api/challenges/${challengeId}/participants`, {
     method: "GET",
+  });
+}
+
+export async function joinChallengeWithPersonalGoal(
+  challengeId: string,
+  goal: PersonalChallengeGoalInput,
+): Promise<ChallengeParticipant> {
+  return fetchJSON(`/api/challenges/${challengeId}/join`, {
+    method: "POST",
+    body: JSON.stringify(goal),
+  });
+}
+
+export async function getMyChallengePlan(challengeId: string): Promise<ChallengeParticipant> {
+  return fetchJSON(`/api/challenges/${challengeId}/my-plan`);
+}
+
+export async function updateMyChallengePlan(
+  challengeId: string,
+  goal: Partial<PersonalChallengeGoalInput>,
+): Promise<ChallengeParticipant> {
+  return fetchJSON(`/api/challenges/${challengeId}/my-plan`, {
+    method: "PATCH",
+    body: JSON.stringify(goal),
+  });
+}
+
+export async function getChallengeCheckIns(challengeId: string): Promise<ChallengeCheckIn[]> {
+  return fetchJSON(`/api/challenges/${challengeId}/check-ins`);
+}
+
+export async function submitChallengeCheckIn(
+  challengeId: string,
+  input: ChallengeCheckInInput,
+): Promise<ChallengeCheckIn> {
+  return fetchJSON(`/api/challenges/${challengeId}/check-ins`, {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }
 

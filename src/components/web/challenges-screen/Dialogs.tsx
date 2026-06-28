@@ -7,6 +7,7 @@ import type {
   Goal,
   PaymentMethod,
   Report,
+  PersonalChallengeGoalInput,
 } from "@/types";
 
 const AcceptChallengeDialog = lazy(() =>
@@ -24,6 +25,12 @@ const LeaveChallengeDialog = lazy(() =>
 const SelectPaymentMethodDialog = lazy(() =>
   import("@/components/web/challenges/SelectPaymentMethodDialog").then((m) => ({ default: m.SelectPaymentMethodDialog })),
 );
+const PersonalChallengeJoinDialog = lazy(() =>
+  import("@/components/web/challenges/PersonalChallengeJoinDialog").then((m) => ({ default: m.PersonalChallengeJoinDialog })),
+);
+const ChallengeCheckInDialog = lazy(() =>
+  import("@/components/web/challenges/ChallengeCheckInDialog").then((m) => ({ default: m.ChallengeCheckInDialog })),
+);
 
 function DialogFallback() {
   return null;
@@ -38,6 +45,8 @@ export function ChallengesScreenDialogs({
   reportsDialogOpen,
   acceptDialogOpen,
   selectedChallenge,
+  personalJoinChallenge,
+  checkInChallenge,
   reports,
   participants,
   onCloseChallengeDialog,
@@ -52,6 +61,9 @@ export function ChallengesScreenDialogs({
   onKickParticipant,
   onSetLeaveDialogOpen,
   onConfirmLeave,
+  onClosePersonalJoinDialog,
+  onJoinWithPersonalGoal,
+  onCloseCheckInDialog,
 }: {
   goals: Goal[];
   challengeDialogOpen: boolean;
@@ -61,6 +73,8 @@ export function ChallengesScreenDialogs({
   reportsDialogOpen: boolean;
   acceptDialogOpen: boolean;
   selectedChallenge?: Challenge | null;
+  personalJoinChallenge?: Challenge | null;
+  checkInChallenge?: Challenge | null;
   reports: Report[];
   participants: ChallengeParticipant[];
   onCloseChallengeDialog: (open: boolean) => void;
@@ -75,6 +89,9 @@ export function ChallengesScreenDialogs({
   onKickParticipant: (challengeId: string, userId: string) => Promise<void>;
   onSetLeaveDialogOpen: (open: boolean) => void;
   onConfirmLeave: () => Promise<void>;
+  onClosePersonalJoinDialog: () => void;
+  onJoinWithPersonalGoal: (challenge: Challenge, goal: PersonalChallengeGoalInput) => Promise<void>;
+  onCloseCheckInDialog: () => void;
 }) {
   return (
     <Suspense fallback={<DialogFallback />}>
@@ -104,6 +121,19 @@ export function ChallengesScreenDialogs({
           onAccept={onAcceptChallenge}
           onShare={onShareChallenge}
         />
+      )}
+
+      {personalJoinChallenge && (
+        <PersonalChallengeJoinDialog
+          challenge={personalJoinChallenge}
+          open
+          onOpenChange={(nextOpen) => { if (!nextOpen) onClosePersonalJoinDialog(); }}
+          onJoin={onJoinWithPersonalGoal}
+        />
+      )}
+
+      {checkInChallenge && (
+        <ChallengeCheckInDialog challenge={checkInChallenge} open onOpenChange={(nextOpen) => { if (!nextOpen) onCloseCheckInDialog(); }} />
       )}
 
       {selectedChallenge && reportsDialogOpen && (

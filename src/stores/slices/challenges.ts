@@ -12,6 +12,7 @@ type ChallengesSlice = Pick<
   | "updateChallenge"
   | "getLeaderboard"
   | "acceptChallenge"
+  | "joinChallengeWithPersonalGoal"
   | "leaveChallenge"
   | "payChallenge"
   | "syncPaymentStatus"
@@ -29,6 +30,7 @@ export const createChallengesSlice: StoreSlice<ChallengesSlice> = (set, get) => 
       set({ challenges: [...get().challenges, challenge] });
     } catch (err) {
       console.error(err);
+      throw err;
     } finally {
       set({ loading: false });
     }
@@ -50,6 +52,7 @@ export const createChallengesSlice: StoreSlice<ChallengesSlice> = (set, get) => 
       });
     } catch (err) {
       console.error(err);
+      throw err;
     } finally {
       set({ loading: false });
     }
@@ -74,6 +77,19 @@ export const createChallengesSlice: StoreSlice<ChallengesSlice> = (set, get) => 
       await get().initialize();
     } catch (err) {
       console.error(err);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  joinChallengeWithPersonalGoal: async (challenge, goal) => {
+    set({ loading: true });
+    try {
+      await api.joinChallengeWithPersonalGoal(challenge.id, goal);
+      await get().initialize();
+    } catch (err) {
+      console.error(err);
+      throw err;
     } finally {
       set({ loading: false });
     }
@@ -163,4 +179,3 @@ export const createChallengesSlice: StoreSlice<ChallengesSlice> = (set, get) => 
     }
   },
 });
-

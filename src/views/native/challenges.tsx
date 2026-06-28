@@ -42,6 +42,12 @@ export default function NativeChallengesScreen(props: {
     handleOpenParticipants,
     handleLeaveChallenge,
     handleKickParticipant,
+    personalJoinChallenge,
+    checkInChallenge,
+    joinWithPersonalGoal,
+    closePersonalJoinDialog,
+    openCheckInDialog,
+    closeCheckInDialog,
   } = useChallengesScreenController(props);
 
   useEffect(() => {
@@ -110,6 +116,7 @@ export default function NativeChallengesScreen(props: {
         onLeave={handleLeaveChallenge}
         onOpenLink={openChallengeLink}
         onOpenParticipants={openChallengeParticipants}
+        onReport={openCheckInDialog}
       />
 
       <ChallengesScreenDialogs
@@ -134,6 +141,11 @@ export default function NativeChallengesScreen(props: {
         onAcceptChallenge={handleAcceptChallenge}
         onShareChallenge={shareChallenge}
         onSelectPaymentMethod={selectPaymentMethod}
+        personalJoinChallenge={personalJoinChallenge}
+        checkInChallenge={checkInChallenge}
+        onClosePersonalJoin={closePersonalJoinDialog}
+        onJoinWithPersonalGoal={joinWithPersonalGoal}
+        onCloseCheckIn={closeCheckInDialog}
       />
     </View>
   );
