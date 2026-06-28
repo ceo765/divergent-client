@@ -20,6 +20,63 @@ type Props = {
   loading?: boolean;
 };
 
+function buildCalendar(dayjsLocale: string) {
+  const daysToShow = 365;
+  const today = dayjs();
+  const firstDate = today.subtract(daysToShow - 1, "day").startOf("isoWeek");
+  const dates: dayjs.Dayjs[] = [];
+  let current = firstDate;
+  while (current.isBefore(today) || current.isSame(today, "day")) {
+    dates.push(current);
+    current = current.add(1, "day");
+  }
+
+  const weeks: (dayjs.Dayjs | null)[][] = [];
+  let currentWeek: (dayjs.Dayjs | null)[] = [];
+  dates.forEach((date) => {
+    currentWeek.push(date);
+    if (currentWeek.length === 7) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+  });
+
+  if (currentWeek.length > 0) {
+    while (currentWeek.length < 7) {
+      currentWeek.push(null);
+    }
+    weeks.push(currentWeek);
+  }
+
+  const monthLabels: { month: string; colspan: number }[] = [];
+  let lastMonth = weeks[0]?.find((date) => date !== null)?.month();
+  let colspan = 0;
+  weeks.forEach((week) => {
+    const month = week.find((date) => date !== null)?.month();
+    if (month === lastMonth) {
+      colspan++;
+    } else {
+      if (lastMonth !== undefined) {
+        monthLabels.push({
+          month: dayjs().locale(dayjsLocale).month(lastMonth).format("MMM").replace(".", ""),
+          colspan,
+        });
+      }
+      lastMonth = month;
+      colspan = 1;
+    }
+  });
+
+  if (lastMonth !== undefined) {
+    monthLabels.push({
+      month: dayjs().locale(dayjsLocale).month(lastMonth).format("MMM").replace(".", ""),
+      colspan,
+    });
+  }
+
+  return { monthLabels, weeks };
+}
+
 export function NativePeriodCalendar({ goal, dateStatusMap, loading }: Props) {
   const { t, i18n } = useTranslation();
   const dayjsLocale = i18n.language?.startsWith("ru") ? "ru" : "en";
@@ -46,62 +103,7 @@ export function NativePeriodCalendar({ goal, dateStatusMap, loading }: Props) {
     return () => clearTimeout(timer);
   }, [goal, dateStatusMap.size, loading]);
 
-  const daysToShow = 365;
-  const today = dayjs();
-  const firstDate = today.subtract(daysToShow - 1, "day").startOf("isoWeek");
-  const lastDate = today;
-  const dates: dayjs.Dayjs[] = [];
-  let current = firstDate;
-  while (current.isBefore(lastDate) || current.isSame(lastDate, "day")) {
-    dates.push(current);
-    current = current.add(1, "day");
-  }
-
-  const weeks: (dayjs.Dayjs | null)[][] = [];
-  let currentWeek: (dayjs.Dayjs | null)[] = [];
-
-  dates.forEach((date) => {
-    currentWeek.push(date);
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-      currentWeek = [];
-    }
-  });
-
-  if (currentWeek.length > 0) {
-    while (currentWeek.length < 7) {
-      currentWeek.push(null);
-    }
-    weeks.push(currentWeek);
-  }
-
-  const monthLabels: { month: string; colspan: number }[] = [];
-  let lastMonth = weeks[0]?.find((d) => d !== null)?.month();
-  let colspan = 0;
-
-  weeks.forEach((week) => {
-    const firstDay = week.find((d) => d !== null);
-    const month = firstDay?.month();
-    if (month === lastMonth) {
-      colspan++;
-    } else {
-      if (lastMonth !== undefined) {
-        monthLabels.push({
-          month: dayjs().locale(dayjsLocale).month(lastMonth).format("MMM").replace(".", ""),
-          colspan,
-        });
-      }
-      lastMonth = month;
-      colspan = 1;
-    }
-  });
-
-  if (lastMonth !== undefined) {
-    monthLabels.push({
-      month: dayjs().locale(dayjsLocale).month(lastMonth).format("MMM").replace(".", ""),
-      colspan,
-    });
-  }
+  const { monthLabels, weeks } = buildCalendar(dayjsLocale);
 
   return (
     <SurfaceCard gap={12} padding={16} radius={12}>

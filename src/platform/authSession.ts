@@ -3,6 +3,7 @@ export type AuthSessionResult =
   | { type: "cancel" | "dismiss" | "opened" | "locked" };
 
 export async function openAuthSession(url: string, _redirectUrl: string): Promise<AuthSessionResult> {
+  void _redirectUrl;
   if (typeof window !== "undefined") {
     window.location.assign(url);
   }
