@@ -406,6 +406,12 @@ export async function sendChallengePhoto(challengeId: string, photo: ReportUploa
   });
 }
 
+export async function getChallengePhoto(imageUrl: string): Promise<Blob> {
+  const response = await fetchWithAuth(imageUrl);
+  if (!response.ok) throw new Error(`Failed to load challenge photo: ${response.status}`);
+  return response.blob();
+}
+
 export function resolveApiUrl(path?: string | null) {
   return path ? `${Config.data.api.http.baseURL}${path}` : "";
 }

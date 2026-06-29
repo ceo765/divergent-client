@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, Image, Text, View } from "react-native";
+import { Alert, Image, Modal, Pressable, Text, View } from "react-native";
 
 import { ActionChip } from "@/components/native/ActionChip";
 import { FieldInput } from "@/components/native/FieldInput";
@@ -23,6 +23,7 @@ export function ChallengeChatSheet({ challenge, open, onOpenChange }: { challeng
   const [messageActionPending, setMessageActionPending] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Awaited<ReturnType<typeof pickChallengePhoto>>>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [previewPhoto, setPreviewPhoto] = useState<ChallengeGroupMessage | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -84,12 +85,13 @@ export function ChallengeChatSheet({ challenge, open, onOpenChange }: { challeng
         const canDelete = !deleted && (own || challenge.creatorId === userId);
         return <View key={message.id} style={{ alignItems: own ? "flex-end" : "flex-start" }}><SurfaceCard padding={12} gap={4}>
           <Text style={{ color: appPalette.brand.primary, fontWeight: "600", fontFamily: "Montserrat", fontSize: 12 }}>{own ? "Вы" : message.author?.name || message.authorName}</Text>
-          {!!message.imageUrl && !deleted && <Image
-            source={{ uri: resolveApiUrl(message.imageUrl), headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : undefined }}
-            resizeMode="contain"
-            accessibilityLabel={message.imageOriginalName || "Фото"}
-            style={{ width: 260, height: 220, borderRadius: 12, backgroundColor: appPalette.semantic.neutralSurface }}
-          />}
+          {!!message.imageUrl && !deleted && <Pressable accessibilityRole="button" accessibilityLabel={`Открыть фото: ${message.imageOriginalName || "Фото"}`} onPress={() => setPreviewPhoto(message)}>
+            <Image
+              source={{ uri: resolveApiUrl(message.imageUrl), headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : undefined }}
+              resizeMode="contain"
+              style={{ width: 260, height: 220, borderRadius: 12, backgroundColor: appPalette.semantic.neutralSurface }}
+            />
+          </Pressable>}
           {editingId === message.id ? <>
             <FieldInput value={editingContent} onChangeText={setEditingContent} multiline numberOfLines={3} maxLength={2000} />
             <View style={{ flexDirection: "row", gap: 8 }}><ActionChip tone="primary" disabled={!editingContent.trim() || messageActionPending} onPress={() => void saveEdit()}>Сохранить</ActionChip><ActionChip onPress={() => setEditingId(null)}>Отмена</ActionChip></View>
@@ -112,6 +114,17 @@ export function ChallengeChatSheet({ challenge, open, onOpenChange }: { challeng
       </View>
       {!!error && <Text style={{ color: appPalette.semantic.dangerText, fontFamily: "Montserrat", fontSize: 12 }}>{error}</Text>}
       <ActionChip tone="primary" disabled={(!content.trim() && !selectedPhoto) || sending} onPress={() => void send()}>{sending ? "Отправляем…" : "Отправить"}</ActionChip>
+      <Modal visible={Boolean(previewPhoto)} transparent animationType="fade" onRequestClose={() => setPreviewPhoto(null)}>
+        <View style={{ flex: 1, padding: 20, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.94)" }}>
+          {previewPhoto?.imageUrl && <Image
+            source={{ uri: resolveApiUrl(previewPhoto.imageUrl), headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : undefined }}
+            resizeMode="contain"
+            accessibilityLabel={previewPhoto.imageOriginalName || "Фото"}
+            style={{ width: "100%", height: "85%" }}
+          />}
+          <ActionChip onPress={() => setPreviewPhoto(null)}>Закрыть</ActionChip>
+        </View>
+      </Modal>
     </FormSheetLayout>
   );
 }

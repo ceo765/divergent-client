@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { deleteChallengeMessage, editChallengeMessage, getChallengeMessages, resolveApiUrl, sendChallengeMessage, sendChallengePhoto } from "@/shared/api/client";
+import { ChallengeMessagePhoto } from "@/components/web/challenges/ChallengeMessagePhoto";
+import { deleteChallengeMessage, editChallengeMessage, getChallengeMessages, sendChallengeMessage, sendChallengePhoto } from "@/shared/api/client";
 import { useAppStore } from "@/stores/useAppStore";
 import type { Challenge, ChallengeGroupMessage } from "@/types";
 
@@ -99,7 +100,7 @@ export function ChallengeChatDialog({ challenge, open, onOpenChange }: { challen
             return <div key={message.id} className={`flex ${own ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[85%] rounded-xl px-3 py-2 ${own ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                 <p className="text-xs font-semibold">{own ? "Вы" : message.author?.name || message.authorName}</p>
-                {!!message.imageUrl && !deleted && <img src={resolveApiUrl(message.imageUrl)} crossOrigin="use-credentials" alt={message.imageOriginalName || "Фото"} className="mb-2 max-h-72 max-w-full rounded-lg object-contain" />}
+                {!!message.imageUrl && !deleted && <ChallengeMessagePhoto message={message} />}
                 {editingId === message.id ? <div className="space-y-2">
                   <Textarea value={editingContent} maxLength={2000} onChange={(event) => setEditingContent(event.target.value)} />
                   <div className="flex gap-2"><Button size="sm" variant="secondary" disabled={!editingContent.trim() || messageActionPending} onClick={() => void saveEdit()}>Сохранить</Button><Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Отмена</Button></div>
