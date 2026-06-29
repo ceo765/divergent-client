@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { getChallengeMessages, sendChallengeMessage } from "@/shared/api/client";
+import { deleteChallengeMessage, editChallengeMessage, getChallengeMessages, sendChallengeMessage } from "@/shared/api/client";
 import { useAppStore } from "@/stores/useAppStore";
 import type { Challenge, ChallengeGroupMessage } from "@/types";
 
@@ -14,6 +14,9 @@ export function ChallengeChatDialog({ challenge, open, onOpenChange }: { challen
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [messageActionPending, setMessageActionPending] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -51,6 +54,30 @@ export function ChallengeChatDialog({ challenge, open, onOpenChange }: { challen
     }
   };
 
+  const replaceMessage = (next: ChallengeGroupMessage) => {
+    setMessages((current) => current.map((item) => item.id === next.id ? next : item));
+  };
+
+  const saveEdit = async () => {
+    const value = editingContent.trim();
+    if (!editingId || !value || messageActionPending) return;
+    try {
+      setMessageActionPending(true); setError("");
+      replaceMessage(await editChallengeMessage(challenge.id, editingId, value));
+      setEditingId(null); setEditingContent("");
+    } catch { setError("Не удалось отредактировать сообщение."); }
+    finally { setMessageActionPending(false); }
+  };
+
+  const remove = async (messageId: string) => {
+    if (!window.confirm("Удалить сообщение? Вместо текста останется отметка об удалении.")) return;
+    try {
+      setMessageActionPending(true); setError("");
+      replaceMessage(await deleteChallengeMessage(challenge.id, messageId));
+    } catch { setError("Не удалось удалить сообщение."); }
+    finally { setMessageActionPending(false); }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[86vh] max-w-2xl flex-col">
@@ -61,11 +88,21 @@ export function ChallengeChatDialog({ challenge, open, onOpenChange }: { challen
         <div className="min-h-48 flex-1 space-y-3 overflow-y-auto rounded-lg border p-3">
           {loading ? <p className="text-sm text-muted-foreground">Загружаем сообщения…</p> : messages.length === 0 ? <p className="text-sm text-muted-foreground">Сообщений пока нет. Начните разговор.</p> : messages.map((message) => {
             const own = message.authorId === userId;
+            const deleted = Boolean(message.deletedAt);
+            const canEdit = own && !deleted && Date.now() - new Date(message.createdAt).getTime() <= 60 * 60 * 1000;
+            const canDelete = !deleted && (own || challenge.creatorId === userId);
             return <div key={message.id} className={`flex ${own ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[85%] rounded-xl px-3 py-2 ${own ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                {!own && <p className="text-xs font-semibold">{message.author?.name || "Участник"}</p>}
-                <p className="whitespace-pre-wrap break-words text-sm">{message.content}</p>
-                <p className={`mt-1 text-[10px] ${own ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(new Date(message.createdAt))}</p>
+                <p className="text-xs font-semibold">{own ? "Вы" : message.author?.name || message.authorName}</p>
+                {editingId === message.id ? <div className="space-y-2">
+                  <Textarea value={editingContent} maxLength={2000} onChange={(event) => setEditingContent(event.target.value)} />
+                  <div className="flex gap-2"><Button size="sm" variant="secondary" disabled={!editingContent.trim() || messageActionPending} onClick={() => void saveEdit()}>Сохранить</Button><Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Отмена</Button></div>
+                </div> : <p className={`whitespace-pre-wrap break-words text-sm ${deleted ? "italic opacity-70" : ""}`}>{deleted ? "Сообщение удалено" : message.content}</p>}
+                <p className={`mt-1 text-[10px] ${own ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(new Date(message.createdAt))}{message.editedAt && !deleted ? " · изменено" : ""}</p>
+                {editingId !== message.id && (canEdit || canDelete) && <div className="mt-1 flex gap-2">
+                  {canEdit && <button className="text-[10px] underline" onClick={() => { setEditingId(message.id); setEditingContent(message.content); }}>Изменить</button>}
+                  {canDelete && <button className="text-[10px] underline" disabled={messageActionPending} onClick={() => void remove(message.id)}>Удалить</button>}
+                </div>}
               </div>
             </div>;
           })}

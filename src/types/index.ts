@@ -176,9 +176,12 @@ export interface ChallengeGroupMessage {
   id: string;
   challengeId: string;
   authorId?: string;
+  authorName: string;
   content: string;
   createdAt: string;
   updatedAt: string;
+  editedAt?: string;
+  deletedAt?: string;
   author?: Pick<User, "id" | "name" | "photoUrl"> | null;
 }
 

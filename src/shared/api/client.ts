@@ -399,6 +399,17 @@ export async function sendChallengeMessage(challengeId: string, content: string)
   });
 }
 
+export async function editChallengeMessage(challengeId: string, messageId: string, content: string): Promise<ChallengeGroupMessage> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages/${messageId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function deleteChallengeMessage(challengeId: string, messageId: string): Promise<ChallengeGroupMessage> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages/${messageId}`, { method: "DELETE" });
+}
+
 export async function getActivity(goalId: string) {
   return await fetchJSON(`/api/goals/${goalId}/activity`, {
     method: "GET",
