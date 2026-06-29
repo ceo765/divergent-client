@@ -2,7 +2,7 @@
 import { readDownloadResponse } from "@/platform/download";
 import { streamFetch } from "@/platform/streamFetch";
 import { clearSessionToken, readSessionToken, writeSessionToken } from "@/platform/session";
-import { createReportUploadBody } from "@/platform/upload";
+import { createChallengePhotoUploadBody, createReportUploadBody } from "@/platform/upload";
 import type {
   AIChatResponse,
   Challenge,
@@ -397,6 +397,17 @@ export async function sendChallengeMessage(challengeId: string, content: string)
     method: "POST",
     body: JSON.stringify({ content }),
   });
+}
+
+export async function sendChallengePhoto(challengeId: string, photo: ReportUploadPayload): Promise<ChallengeGroupMessage> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages/photo`, {
+    method: "POST",
+    body: createChallengePhotoUploadBody(photo),
+  });
+}
+
+export function resolveApiUrl(path?: string | null) {
+  return path ? `${Config.data.api.http.baseURL}${path}` : "";
 }
 
 export async function editChallengeMessage(challengeId: string, messageId: string, content: string): Promise<ChallengeGroupMessage> {

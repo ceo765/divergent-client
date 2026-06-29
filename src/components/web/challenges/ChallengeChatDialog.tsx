@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { deleteChallengeMessage, editChallengeMessage, getChallengeMessages, sendChallengeMessage } from "@/shared/api/client";
+import { deleteChallengeMessage, editChallengeMessage, getChallengeMessages, resolveApiUrl, sendChallengeMessage, sendChallengePhoto } from "@/shared/api/client";
 import { useAppStore } from "@/stores/useAppStore";
 import type { Challenge, ChallengeGroupMessage } from "@/types";
 
@@ -17,6 +17,8 @@ export function ChallengeChatDialog({ challenge, open, onOpenChange }: { challen
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [messageActionPending, setMessageActionPending] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -40,13 +42,16 @@ export function ChallengeChatDialog({ challenge, open, onOpenChange }: { challen
 
   const send = async () => {
     const value = content.trim();
-    if (!value || sending) return;
+    if ((!value && !selectedPhoto) || sending) return;
     try {
       setSending(true);
       setError("");
-      const saved = await sendChallengeMessage(challenge.id, value);
+      const saved = selectedPhoto
+        ? await sendChallengePhoto(challenge.id, { file: selectedPhoto, fileName: selectedPhoto.name, mimeType: selectedPhoto.type, comment: value })
+        : await sendChallengeMessage(challenge.id, value);
       setMessages((current) => [...current.filter((item) => item.id !== saved.id), saved]);
       setContent("");
+      setSelectedPhoto(null);
     } catch {
       setError("Не удалось отправить сообщение.");
     } finally {
@@ -94,10 +99,11 @@ export function ChallengeChatDialog({ challenge, open, onOpenChange }: { challen
             return <div key={message.id} className={`flex ${own ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[85%] rounded-xl px-3 py-2 ${own ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                 <p className="text-xs font-semibold">{own ? "Вы" : message.author?.name || message.authorName}</p>
+                {!!message.imageUrl && !deleted && <img src={resolveApiUrl(message.imageUrl)} crossOrigin="use-credentials" alt={message.imageOriginalName || "Фото"} className="mb-2 max-h-72 max-w-full rounded-lg object-contain" />}
                 {editingId === message.id ? <div className="space-y-2">
                   <Textarea value={editingContent} maxLength={2000} onChange={(event) => setEditingContent(event.target.value)} />
                   <div className="flex gap-2"><Button size="sm" variant="secondary" disabled={!editingContent.trim() || messageActionPending} onClick={() => void saveEdit()}>Сохранить</Button><Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Отмена</Button></div>
-                </div> : <p className={`whitespace-pre-wrap break-words text-sm ${deleted ? "italic opacity-70" : ""}`}>{deleted ? "Сообщение удалено" : message.content}</p>}
+                </div> : (deleted || message.content) ? <p className={`whitespace-pre-wrap break-words text-sm ${deleted ? "italic opacity-70" : ""}`}>{deleted ? "Сообщение удалено" : message.content}</p> : null}
                 <p className={`mt-1 text-[10px] ${own ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(new Date(message.createdAt))}{message.editedAt && !deleted ? " · изменено" : ""}</p>
                 {editingId !== message.id && (canEdit || canDelete) && <div className="mt-1 flex gap-2">
                   {canEdit && <button className="text-[10px] underline" onClick={() => { setEditingId(message.id); setEditingContent(message.content); }}>Изменить</button>}
@@ -107,11 +113,29 @@ export function ChallengeChatDialog({ challenge, open, onOpenChange }: { challen
             </div>;
           })}
         </div>
-        <Textarea value={content} maxLength={2000} onChange={(event) => setContent(event.target.value)} placeholder="Напишите сообщение…" />
+        <Textarea value={content} maxLength={2000} onChange={(event) => setContent(event.target.value)} placeholder={selectedPhoto ? "Добавьте подпись…" : "Напишите сообщение…"} />
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0] || null;
+            event.target.value = "";
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) { setError("Фото должно быть не больше 10 МБ."); return; }
+            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { setError("Поддерживаются JPEG, PNG и WebP."); return; }
+            setError(""); setSelectedPhoto(file);
+          }}
+        />
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" onClick={() => photoInputRef.current?.click()}>Добавить фото</Button>
+          {selectedPhoto && <><span className="truncate text-sm text-muted-foreground">{selectedPhoto.name}</span><Button type="button" size="sm" variant="ghost" onClick={() => setSelectedPhoto(null)}>Убрать</Button></>}
+        </div>
         {!!error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Закрыть</Button>
-          <Button disabled={!content.trim() || sending} onClick={() => void send()}>{sending ? "Отправляем…" : "Отправить"}</Button>
+          <Button disabled={(!content.trim() && !selectedPhoto) || sending} onClick={() => void send()}>{sending ? "Отправляем…" : "Отправить"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

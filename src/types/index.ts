@@ -182,6 +182,10 @@ export interface ChallengeGroupMessage {
   updatedAt: string;
   editedAt?: string;
   deletedAt?: string;
+  imageUrl?: string;
+  imageMimeType?: string;
+  imageSize?: number;
+  imageOriginalName?: string;
   author?: Pick<User, "id" | "name" | "photoUrl"> | null;
 }
 
