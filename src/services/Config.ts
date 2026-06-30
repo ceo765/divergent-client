@@ -24,10 +24,15 @@ function isNativeRuntime() {
 }
 
 function readNativeEnvConfig() {
+  const appEnv = process.env.EXPO_PUBLIC_APP_ENV || "production";
   const publicURL = process.env.EXPO_PUBLIC_APP_PUBLIC_URL || "";
   const scheme = process.env.EXPO_PUBLIC_APP_SCHEME || "";
   const twaURL = process.env.EXPO_PUBLIC_TELEGRAM_BOT_URL || "";
   const apiBaseURL = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+
+  if (appEnv !== "production" && (!apiBaseURL || !publicURL)) {
+    throw new Error(`Safe configuration stop: ${appEnv} builds require EXPO_PUBLIC_API_BASE_URL and EXPO_PUBLIC_APP_PUBLIC_URL`);
+  }
 
   if (!publicURL && !scheme && !twaURL && !apiBaseURL) {
     return null;

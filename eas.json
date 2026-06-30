@@ -10,17 +10,26 @@
     "development": {
       "extends": "base",
       "environment": "development",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "development"
+      },
       "developmentClient": true,
       "distribution": "internal"
     },
     "preview": {
       "extends": "base",
       "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "staging"
+      },
       "distribution": "internal"
     },
     "testflight": {
       "extends": "base",
       "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "staging"
+      },
       "distribution": "store",
       "autoIncrement": true,
       "ios": {
@@ -30,6 +39,9 @@
     "production": {
       "extends": "base",
       "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production"
+      },
       "autoIncrement": true
     }
   },
