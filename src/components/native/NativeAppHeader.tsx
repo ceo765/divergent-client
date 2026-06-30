@@ -2,7 +2,7 @@
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 import { useTranslation } from "react-i18next";
 
-import { Settings } from "@/components/native/icons";
+import { ScrollText, Settings } from "@/components/native/icons";
 import { appPalette } from "@/theme/palette";
 import type { User } from "@/types";
 
@@ -17,9 +17,13 @@ function getInitials(name: string) {
 
 export function NativeAppHeader({
   user,
+  missionBadgeCount,
+  onOpenMissions,
   onOpenSettings,
 }: {
   user: User;
+  missionBadgeCount: number;
+  onOpenMissions: () => void;
   onOpenSettings: () => void;
 }) {
   const { t } = useTranslation();
@@ -93,20 +97,15 @@ export function NativeAppHeader({
               {user.name || user.email || "User"}
             </Text>
 
-            <Pressable
-              onPress={onOpenSettings}
-              hitSlop={8}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "transparent",
-              }}
-            >
-              <Settings size={20} color={appPalette.semantic.textMuted} />
-            </Pressable>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+              <Pressable onPress={onOpenMissions} hitSlop={8} style={{ position: "relative", width: 36, height: 36, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
+                {!!missionBadgeCount && <View style={{ position: "absolute", right: -1, top: -3, zIndex: 2, width: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: appPalette.semantic.dangerStrong }}><Text style={{ color: "white", fontSize: 10, fontWeight: "700" }}>{missionBadgeCount}</Text></View>}
+                <ScrollText size={20} color={appPalette.semantic.textMuted} />
+              </Pressable>
+              <Pressable onPress={onOpenSettings} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
+                <Settings size={20} color={appPalette.semantic.textMuted} />
+              </Pressable>
+            </View>
           </View>
 
           <View style={{ gap: 6 }}>

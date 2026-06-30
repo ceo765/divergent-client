@@ -202,6 +202,34 @@ export type OnboardingStepKey =
   | "completed_first_task";
 export type OnboardingState = Partial<Record<OnboardingStepKey, string | null>>;
 
+export type MissionKey =
+  | "used_ai"
+  | "created_first_goal"
+  | "added_first_task"
+  | "added_first_subtask"
+  | "created_first_reminder"
+  | "completed_first_task"
+  | "created_recurring_goal"
+  | "created_first_numeric_goal"
+  | "viewed_progress"
+  | "created_linked_artifact";
+
+export interface MissionProgress {
+  key: MissionKey;
+  order: number;
+  xpReward: number;
+  completedAt: string | null;
+  claimedAt: string | null;
+}
+
+export interface MissionState {
+  missions: MissionProgress[];
+  activeKey: MissionKey | null;
+  pendingRewardKey: MissionKey | null;
+  badgeCount: number;
+  introSeen: boolean;
+}
+
 export interface GoalFormData extends Goal {
   rewardId?: string | null;
 }

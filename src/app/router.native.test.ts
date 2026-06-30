@@ -31,6 +31,8 @@ test("parses app routes from native scheme urls", () => {
     parseNativeAppRoute("divergent://progress?goalId=goal-1"),
     { kind: "app", tab: "progress", goalId: "goal-1" },
   );
+
+  assert.deepEqual(parseNativeAppRoute("divergent://missions"), { kind: "app", tab: "missions" });
 });
 
 test("parses auth routes including reset confirmation", () => {

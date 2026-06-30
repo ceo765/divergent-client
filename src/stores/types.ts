@@ -18,6 +18,8 @@ import type {
   Report,
   ReportUploadPayload,
   Reward,
+  MissionKey,
+  MissionState,
   User,
 } from "@/types";
 import type { ChallengeInput } from "@/types";
@@ -47,6 +49,8 @@ export interface AppStoreState {
     message?: string;
     tone: "success" | "danger" | "info";
   } | null;
+  missionState: MissionState | null;
+  missionsLoading: boolean;
 }
 
 export interface AuthSlice {
@@ -115,6 +119,10 @@ export interface AppStoreActions {
     durationMs?: number;
   }) => void;
   hideNativeToast: () => void;
+  loadMissions: () => Promise<void>;
+  markMissionIntroSeen: () => Promise<void>;
+  claimMissionReward: (key: MissionKey) => Promise<void>;
+  recordProgressViewed: () => Promise<void>;
 }
 
 export type AppStore = AppStoreState & AuthSlice & AppStoreActions;

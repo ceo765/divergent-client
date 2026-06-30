@@ -16,6 +16,7 @@ export const createRewardsSlice: StoreSlice<RewardsSlice> = (set, get) => ({
     try {
       const newReward = await api.createReward(reward);
       set({ rewards: [...get().rewards, newReward] });
+      await get().loadMissions();
     } catch (err) {
       console.error(err);
     } finally {

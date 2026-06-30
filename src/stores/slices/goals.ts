@@ -107,6 +107,7 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
         ),
       });
       await completeGoalOnboardingSteps(get, updatedGoal);
+      await get().loadMissions();
     } catch (err) {
       console.error(err);
     } finally {

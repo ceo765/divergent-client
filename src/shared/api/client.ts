@@ -21,6 +21,8 @@ import type {
   Reward,
   User,
   PersonalChallengeGoalInput,
+  MissionKey,
+  MissionState,
 } from "@/types";
 
 const API_TIMEOUT_MS = 15000;
@@ -404,6 +406,22 @@ export async function sendChallengePhoto(challengeId: string, photo: ReportUploa
     method: "POST",
     body: createChallengePhotoUploadBody(photo),
   });
+}
+
+export async function getMissions(): Promise<MissionState> {
+  return fetchJSON("/api/missions");
+}
+
+export async function markMissionIntroSeen(): Promise<MissionState> {
+  return fetchJSON("/api/missions/intro-seen", { method: "POST", body: JSON.stringify({}) });
+}
+
+export async function claimMissionReward(missionKey: MissionKey): Promise<MissionState & { user: Pick<User, "xp" | "level" | "xpInCurrentLevel" | "requiredXp"> }> {
+  return fetchJSON(`/api/missions/${missionKey}/claim`, { method: "POST", body: JSON.stringify({}) });
+}
+
+export async function recordProgressViewed(): Promise<MissionState> {
+  return fetchJSON("/api/missions/events/progress-viewed", { method: "POST", body: JSON.stringify({}) });
 }
 
 export async function getChallengePhoto(imageUrl: string): Promise<Blob> {

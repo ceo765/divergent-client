@@ -18,6 +18,15 @@
       "environment": "preview",
       "distribution": "internal"
     },
+    "testflight": {
+      "extends": "base",
+      "environment": "preview",
+      "distribution": "store",
+      "autoIncrement": true,
+      "ios": {
+        "simulator": false
+      }
+    },
     "production": {
       "extends": "base",
       "environment": "production",
@@ -25,6 +34,11 @@
     }
   },
   "submit": {
+    "testflight": {
+      "ios": {
+        "ascAppId": "6765858587"
+      }
+    },
     "production": {
       "ios": {
         "ascAppId": "6765858587"

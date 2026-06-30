@@ -68,9 +68,10 @@
                        "goals":  "Goals",
                        "challenges":  "Challenges",
                        "frens":  "Friends",
-                       "rewards":  "Rewards",
+                       "rewards":  "Artifacts",
                        "progress":  "Progress",
-                       "reminders":  "Reminders"
+                       "reminders":  "Reminders",
+                       "missions": "Missions"
                    },
     "weekdays":  {
                      "mon":  "Mo",
@@ -114,6 +115,38 @@
                                    "reminder_prompt":  "I want to spend 30 minutes on English every evening. Remind me at 9:00 PM."
                                }
                 },
+    "missions": {
+      "title": "Missions",
+      "intro_title": "Welcome to Divergent!",
+      "intro_description": "Start with Missions. They will introduce the app and guide you step by step through setting goals, working with AI, and tracking progress. Missions are under the scroll icon in the top-right corner.",
+      "intro_start": "Start the first mission",
+      "subtitle": "Learn Divergent through real actions and earn experience.",
+      "progress": "{{completed}} of {{total}} complete",
+      "active": "Current mission",
+      "completed": "Completed",
+      "locked": "Unlocks after the previous mission",
+      "what_to_do": "What to do",
+      "example": "Example",
+      "go_to_action": "Start mission",
+      "reward_title": "Mission complete!",
+      "reward_received": "You earned a reward",
+      "claim": "Claim +{{xp}} XP",
+      "claiming": "Adding experience…",
+      "later": "Later",
+      "all_complete": "All core missions are complete!",
+      "items": {
+        "used_ai": { "title": "Meet the AI", "description": "Tell the AI what you want to achieve. It will help shape the goal and plan.", "action": "Send your first AI message.", "example": "I want to save 300,000 in a year. Help me make a realistic plan." },
+        "created_first_goal": { "title": "Your first goal", "description": "Turn a wish into a concrete goal you can complete.", "action": "Create a goal manually or with AI.", "example": "Save 300,000 by December 31." },
+        "added_first_task": { "title": "The first step", "description": "A big goal begins with one clear next action.", "action": "Add at least one task to a goal.", "example": "Open a separate savings account." },
+        "added_first_subtask": { "title": "Break it into levels", "description": "Split a complex task into small, clear steps.", "action": "Add a subtask to a task.", "example": "Find a new job → update the resume." },
+        "created_first_reminder": { "title": "Don't forget", "description": "A reminder helps you act on time without keeping everything in your head.", "action": "Create a reminder for a goal or task.", "example": "Transfer money to savings every Monday at 10:00." },
+        "completed_first_task": { "title": "First victory", "description": "Take the first real step and record the result.", "action": "Complete and check off one task.", "example": "Open the savings account and mark the task complete." },
+        "created_recurring_goal": { "title": "Build a rhythm", "description": "Repeated actions turn a goal into a sustainable habit.", "action": "Create a daily, weekly, or monthly goal.", "example": "Read 10 pages every day." },
+        "created_first_numeric_goal": { "title": "Measurable result", "description": "A numeric goal shows what is done and what remains.", "action": "Create a goal with current and target values.", "example": "Save 300,000; current amount: 50,000." },
+        "viewed_progress": { "title": "See your progress", "description": "Track results, streaks, and completed actions.", "action": "Open Progress after completing a task.", "example": "See how many tasks you completed this week." },
+        "created_linked_artifact": { "title": "Choose your artifact", "description": "Choose a reward you will receive after reaching a goal.", "action": "Create a reward and link it to a goal.", "example": "New headphones for reaching a financial goal." }
+      }
+    },
     "settings":  {
                      "title":  "Settings",
                      "subtitle":  "Profile, language, timezone, and sign-in.",

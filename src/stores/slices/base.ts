@@ -13,4 +13,6 @@ export const createBaseSlice: StoreSlice<AppStoreState> = () => ({
   categories: [],
   reports: {},
   nativeToast: null,
+  missionState: null,
+  missionsLoading: false,
 });
