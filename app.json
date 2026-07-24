@@ -2,6 +2,7 @@
   "expo": {
     "name": "Divergent",
     "slug": "divergent-client",
+    "owner": "divergent_maxx",
     "scheme": "divergent",
     "icon": "./public/icon.jpg",
     "plugins": [
@@ -25,7 +26,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "63f44398-912c-4439-8efe-0d474e65d1ae"
+        "projectId": "619f4990-0c03-46ec-9dab-e4e5ff429b48"
       }
     }
   }
