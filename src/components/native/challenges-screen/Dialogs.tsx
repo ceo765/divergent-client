@@ -9,6 +9,7 @@ import type {
   Goal,
   PaymentMethod,
   Report,
+  PersonalChallengeGoalInput,
 } from "@/types";
 
 const ChallengeDetailsSheet = lazy(() =>
@@ -19,6 +20,15 @@ const ChallengeFormSheet = lazy(() =>
 );
 const SelectPaymentMethodSheet = lazy(() =>
   import("@/components/native/SelectPaymentMethodSheet").then((m) => ({ default: m.SelectPaymentMethodSheet })),
+);
+const PersonalChallengeJoinSheet = lazy(() =>
+  import("@/components/native/PersonalChallengeJoinSheet").then((m) => ({ default: m.PersonalChallengeJoinSheet })),
+);
+const ChallengeCheckInSheet = lazy(() =>
+  import("@/components/native/ChallengeCheckInSheet").then((m) => ({ default: m.ChallengeCheckInSheet })),
+);
+const ChallengeChatSheet = lazy(() =>
+  import("@/components/native/ChallengeChatSheet").then((m) => ({ default: m.ChallengeChatSheet })),
 );
 
 function SheetFallback() {
@@ -47,6 +57,13 @@ export function ChallengesScreenDialogs({
   onAcceptChallenge,
   onShareChallenge,
   onSelectPaymentMethod,
+  personalJoinChallenge,
+  checkInChallenge,
+  chatChallenge,
+  onClosePersonalJoin,
+  onJoinWithPersonalGoal,
+  onCloseCheckIn,
+  onCloseChat,
 }: {
   acceptChallenge?: Challenge | null;
   reportsChallenge?: Challenge | null;
@@ -69,6 +86,13 @@ export function ChallengesScreenDialogs({
   onAcceptChallenge: (id: string) => Promise<{ status: "accepted" | "payment_required" | "ignored" }>;
   onShareChallenge: (id: string) => void;
   onSelectPaymentMethod: (method: PaymentMethod) => Promise<boolean>;
+  personalJoinChallenge?: Challenge | null;
+  checkInChallenge?: Challenge | null;
+  chatChallenge?: Challenge | null;
+  onClosePersonalJoin: () => void;
+  onJoinWithPersonalGoal: (challenge: Challenge, goal: PersonalChallengeGoalInput) => Promise<void>;
+  onCloseCheckIn: () => void;
+  onCloseChat: () => void;
 }) {
   const showReportsDialog = Boolean(reportsChallenge) && reportsDialogOpen;
   const showAcceptDialog = Boolean(acceptChallenge) && acceptDialogOpen && !showReportsDialog;
@@ -119,6 +143,23 @@ export function ChallengesScreenDialogs({
             onOpenChange={onCloseChallengeDialog}
             onSave={onSaveChallenge}
           />
+        )}
+
+        {personalJoinChallenge && (
+          <PersonalChallengeJoinSheet
+            challenge={personalJoinChallenge}
+            open
+            onOpenChange={(nextOpen) => { if (!nextOpen) onClosePersonalJoin(); }}
+            onJoin={onJoinWithPersonalGoal}
+          />
+        )}
+
+        {checkInChallenge && (
+          <ChallengeCheckInSheet challenge={checkInChallenge} open onOpenChange={(nextOpen) => { if (!nextOpen) onCloseCheckIn(); }} />
+        )}
+
+        {chatChallenge && (
+          <ChallengeChatSheet challenge={chatChallenge} open onOpenChange={(nextOpen) => { if (!nextOpen) onCloseChat(); }} />
         )}
       </Suspense>
     </>

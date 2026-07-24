@@ -6,6 +6,8 @@ import { HapticPressable as Pressable } from "@/components/native/HapticPressabl
 import { NativeNavigationProvider } from "@/app/native/NativeNavigation";
 import { parseNativeAppRoute, type NativeAppTab } from "@/app/router.native";
 import { NativeAppHeader } from "@/components/native/NativeAppHeader";
+import { MissionRewardModal } from "@/components/native/MissionRewardModal";
+import { MissionIntroModal } from "@/components/native/MissionIntroModal";
 import { BarChart2, Bell, Gift, Swords, Target } from "@/components/native/icons";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { useAppStore } from "@/stores/useAppStore";
@@ -17,6 +19,7 @@ const NativeProgressScreen = lazy(() => import("@/views/native/ProgressView"));
 const NativeRemindersScreen = lazy(() => import("@/views/native/reminders"));
 const NativeRewardsScreen = lazy(() => import("@/views/native/rewards"));
 const NativeSettingsScreen = lazy(() => import("@/views/native/settings"));
+const NativeMissionsScreen = lazy(() => import("@/views/native/missions"));
 
 function NativeScreenFallback() {
   return <AppLoader fullScreen />;
@@ -98,9 +101,11 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
   }>({});
   const [rewardLinkState, setRewardLinkState] = useState<{ rewardId?: string | null }>({});
   const [progressLinkState, setProgressLinkState] = useState<{ goalId?: string | null }>({});
+  const missionState = useAppStore((state) => state.missionState);
+  const loadMissions = useAppStore((state) => state.loadMissions);
 
   const tabs: Array<{
-    key: Exclude<NativeAppTab, "settings">;
+    key: Exclude<NativeAppTab, "settings" | "missions">;
     label: string;
     icon: typeof Target;
   }> = [
@@ -179,6 +184,13 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
 
   useEffect(() => {
 
+    if (user) {
+      void loadMissions();
+    }
+  }, [loadMissions, user]);
+
+  useEffect(() => {
+
     void Linking.getInitialURL().then((url) => {
       if (url) {
         applyLink(url);
@@ -197,7 +209,7 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
   return (
     <NativeNavigationProvider value={navigationValue}>
       <SafeAreaView style={{ flex: 1, backgroundColor: appPalette.surface.background }}>
-        {!!user && <NativeAppHeader user={user} onOpenSettings={() => setActiveTab("settings")} />}
+        {!!user && <NativeAppHeader user={user} missionBadgeCount={missionState?.badgeCount ?? 0} onOpenMissions={() => setActiveTab("missions")} onOpenSettings={() => setActiveTab("settings")} />}
 
         <View style={{ flex: 1 }}>
           <Suspense fallback={<NativeScreenFallback />}>
@@ -246,6 +258,7 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
               />
             )}
             {activeTab === "settings" && <NativeSettingsScreen />}
+            {activeTab === "missions" && <NativeMissionsScreen />}
           </Suspense>
         </View>
 
@@ -301,6 +314,8 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
             );
           })}
         </View>
+        <MissionIntroModal onStart={() => setActiveTab("missions")} />
+        <MissionRewardModal />
       </SafeAreaView>
     </NativeNavigationProvider>
   );

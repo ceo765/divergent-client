@@ -9,7 +9,7 @@ import { buildProgressActivityView } from "./model";
 
 export function useProgressScreen(goalId?: string | null) {
   const { t, i18n } = useTranslation();
-  const { user, goals, rewards, categories, getActivity, getGoalXp } = useAppStore();
+  const { user, goals, rewards, categories, getActivity, getGoalXp, recordProgressViewed } = useAppStore();
 
   const [xp, setXp] = useState<number>(0);
   const [activity, setActivity] = useState<GoalActivity>();
@@ -17,6 +17,8 @@ export function useProgressScreen(goalId?: string | null) {
   const [xpError, setXpError] = useState(false);
   const [activityError, setActivityError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => { void recordProgressViewed(); }, [recordProgressViewed]);
 
   const selectedGoal = useMemo(() => goals.find((goal) => goal.id === goalId), [goals, goalId]);
   const filteredGoals = useMemo(() => (selectedGoal ? [selectedGoal] : goals), [selectedGoal, goals]);

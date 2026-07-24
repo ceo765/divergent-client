@@ -25,6 +25,9 @@ export default function ChallengesScreen() {
     reportsDialogOpen,
     acceptDialogOpen,
     selectedChallenge,
+    personalJoinChallenge,
+    checkInChallenge,
+    chatChallenge,
     setPaymentDialogOpen,
     setLeaveDialogOpen,
     openCreateChallenge,
@@ -40,6 +43,12 @@ export default function ChallengesScreen() {
     downloadChallengeReport,
     closeReportsDialog,
     acceptSelectedChallenge,
+    joinWithPersonalGoal,
+    closePersonalJoinDialog,
+    openCheckInDialog,
+    closeCheckInDialog,
+    openChatDialog,
+    closeChatDialog,
     selectPaymentMethod,
     kickChallengeParticipant,
     openChallengeLink,
@@ -77,6 +86,8 @@ export default function ChallengesScreen() {
           onOpenLink={openChallengeLink}
           onOpenParticipants={openParticipants}
           onAccept={acceptSelectedChallenge}
+          onReport={openCheckInDialog}
+          onChat={openChatDialog}
         />
       </div>
 
@@ -89,6 +100,9 @@ export default function ChallengesScreen() {
         reportsDialogOpen={reportsDialogOpen}
         acceptDialogOpen={acceptDialogOpen}
         selectedChallenge={selectedChallenge}
+        personalJoinChallenge={personalJoinChallenge}
+        checkInChallenge={checkInChallenge}
+        chatChallenge={chatChallenge}
         reports={reports}
         participants={participants}
         onCloseChallengeDialog={closeChallengeDialog}
@@ -97,6 +111,10 @@ export default function ChallengesScreen() {
         onSelectPaymentMethod={selectPaymentMethod}
         onCloseAcceptDialog={closeAcceptDialog}
         onAcceptChallenge={acceptSelectedChallenge}
+        onJoinWithPersonalGoal={joinWithPersonalGoal}
+        onClosePersonalJoinDialog={closePersonalJoinDialog}
+        onCloseCheckInDialog={closeCheckInDialog}
+        onCloseChatDialog={closeChatDialog}
         onShareChallenge={shareChallenge}
         onCloseReportsDialog={closeReportsDialog}
         onDownloadReport={downloadChallengeReport}

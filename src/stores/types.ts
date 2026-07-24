@@ -5,6 +5,7 @@ import type {
   CategoryOption,
   Challenge,
   ChallengeParticipant,
+  PersonalChallengeGoalInput,
   ChatMessage,
   FriendInput,
   FriendSummary,
@@ -17,6 +18,8 @@ import type {
   Report,
   ReportUploadPayload,
   Reward,
+  MissionKey,
+  MissionState,
   User,
 } from "@/types";
 import type { ChallengeInput } from "@/types";
@@ -46,6 +49,8 @@ export interface AppStoreState {
     message?: string;
     tone: "success" | "danger" | "info";
   } | null;
+  missionState: MissionState | null;
+  missionsLoading: boolean;
 }
 
 export interface AuthSlice {
@@ -75,6 +80,7 @@ export interface AppStoreActions {
   updateChallenge: (challenge: ChallengeInput) => Promise<void>;
   getLeaderboard: (id: string) => Promise<Leader[]>;
   acceptChallenge: (challenge: Challenge) => Promise<void>;
+  joinChallengeWithPersonalGoal: (challenge: Challenge, goal: PersonalChallengeGoalInput) => Promise<void>;
   leaveChallenge: (id: string) => Promise<void>;
   payChallenge: (challenge: Challenge, method: PaymentMethod) => Promise<void>;
   syncPaymentStatus: (paymentId: string) => Promise<"PENDING" | "SUCCESS" | "FAILED" | "CANCELLED">;
@@ -113,9 +119,12 @@ export interface AppStoreActions {
     durationMs?: number;
   }) => void;
   hideNativeToast: () => void;
+  loadMissions: () => Promise<void>;
+  markMissionIntroSeen: () => Promise<void>;
+  claimMissionReward: (key: MissionKey) => Promise<void>;
+  recordProgressViewed: () => Promise<void>;
 }
 
 export type AppStore = AppStoreState & AuthSlice & AppStoreActions;
 
 export type StoreSlice<T> = StateCreator<AppStore, [], [], T>;
-

@@ -2,6 +2,7 @@ import Main from "./Main";
 import { ReactElement, ReactNode } from "react";
 
 import "./index.css";
+import { MissionStateHost } from "@/components/shared/MissionStateHost";
 
 interface LayoutProps {
   header?: ReactNode;
@@ -16,6 +17,7 @@ export default function Layout({ children, header, footer }: LayoutProps): React
       <Main>
         {children}
       </Main>
+      <MissionStateHost />
       {footer}
     </div>
   );

@@ -24,6 +24,7 @@
   Plus,
   Repeat,
   Rocket,
+  ScrollText,
   Share,
   Sparkles,
   Settings,

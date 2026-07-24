@@ -4,11 +4,12 @@ import type { OnboardingStepKey } from "@/types";
 
 type OnboardingSlice = Pick<AppStoreActions, "completeOnboardingStep">;
 
-export const createOnboardingSlice: StoreSlice<OnboardingSlice> = (set) => ({
+export const createOnboardingSlice: StoreSlice<OnboardingSlice> = (set, get) => ({
   completeOnboardingStep: async (step: OnboardingStepKey) => {
     try {
       const user = await api.completeOnboardingStep(step);
       set({ user });
+      await get().loadMissions();
 
       if (
         user.onboardingState?.created_first_goal &&

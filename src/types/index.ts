@@ -76,6 +76,13 @@ export interface Challenge {
   goalIds: string[];
   leaderboard: Leader[];
   requiresReport: boolean;
+  personalGoalsEnabled?: boolean;
+  metricName?: string;
+  metricUnit?: string;
+  reportingDays?: string[];
+  reportDeadline?: string;
+  reportTimeZone?: string;
+  allowedMisses?: number;
   creatorId: string;
   rules?: string;
   link?: string;
@@ -125,6 +132,61 @@ export interface ChallengeParticipant {
   userId: string;
   challenge: Challenge;
   user: User;
+  goalTitle?: string;
+  targetValue?: number;
+  currentValue: number;
+  unit?: string;
+  onboardingAnswers?: Record<string, unknown>;
+  plan?: Record<string, unknown>;
+  status: "ACTIVE" | "LEFT" | "REMOVED";
+  missCount: number;
+}
+
+export interface PersonalChallengeGoalInput {
+  goalTitle: string;
+  targetValue: number;
+  currentValue: number;
+  unit: string;
+  onboardingAnswers?: Record<string, unknown>;
+  plan?: Record<string, unknown>;
+}
+
+export interface ChallengeCheckIn {
+  id: string;
+  challengeId: string;
+  participantId: string;
+  userId: string;
+  reportDate: string;
+  planValue?: number;
+  factValue?: number;
+  doneToday: string[];
+  tasksTomorrow: string[];
+  submittedAt: string;
+  isLate: boolean;
+  user: Pick<User, "id" | "name" | "photoUrl">;
+}
+
+export interface ChallengeCheckInInput {
+  factValue: number;
+  doneToday: string[];
+  tasksTomorrow: string[];
+}
+
+export interface ChallengeGroupMessage {
+  id: string;
+  challengeId: string;
+  authorId?: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  editedAt?: string;
+  deletedAt?: string;
+  imageUrl?: string;
+  imageMimeType?: string;
+  imageSize?: number;
+  imageOriginalName?: string;
+  author?: Pick<User, "id" | "name" | "photoUrl"> | null;
 }
 
 export type GoalType = "TASK" | "PROGRESS";
@@ -139,6 +201,34 @@ export type OnboardingStepKey =
   | "used_ai"
   | "completed_first_task";
 export type OnboardingState = Partial<Record<OnboardingStepKey, string | null>>;
+
+export type MissionKey =
+  | "used_ai"
+  | "created_first_goal"
+  | "added_first_task"
+  | "added_first_subtask"
+  | "created_first_reminder"
+  | "completed_first_task"
+  | "created_recurring_goal"
+  | "created_first_numeric_goal"
+  | "viewed_progress"
+  | "created_linked_artifact";
+
+export interface MissionProgress {
+  key: MissionKey;
+  order: number;
+  xpReward: number;
+  completedAt: string | null;
+  claimedAt: string | null;
+}
+
+export interface MissionState {
+  missions: MissionProgress[];
+  activeKey: MissionKey | null;
+  pendingRewardKey: MissionKey | null;
+  badgeCount: number;
+  introSeen: boolean;
+}
 
 export interface GoalFormData extends Goal {
   rewardId?: string | null;

@@ -1,4 +1,4 @@
-export type NativeAppTab = "goals" | "reminders" | "challenges" | "rewards" | "progress" | "settings";
+export type NativeAppTab = "goals" | "reminders" | "challenges" | "rewards" | "progress" | "missions" | "settings";
 export type NativeAuthTab = "signin" | "signup" | "reset";
 export type NativeResetMode = "request" | "confirm";
 
@@ -8,6 +8,7 @@ export type NativeAppRoute =
   | { kind: "app"; tab: "challenges"; focusId?: string | null; paymentId?: string | null }
   | { kind: "app"; tab: "rewards"; rewardId?: string | null }
   | { kind: "app"; tab: "progress"; goalId?: string | null }
+  | { kind: "app"; tab: "missions" }
   | { kind: "app"; tab: "settings" };
 
 export type NativeAuthRoute = {
@@ -33,6 +34,7 @@ function normalizeAppTab(value: string | null): NativeAppTab | undefined {
     value === "challenges" ||
     value === "rewards" ||
     value === "progress" ||
+    value === "missions" ||
     value === "settings"
   ) {
     return value;

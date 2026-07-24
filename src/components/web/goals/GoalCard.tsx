@@ -104,7 +104,7 @@ export function GoalCard({ id, title, description, category, tasks, challenge, g
     setNewSubTaskTitles({ ...newSubTaskTitles, [parentId]: "" });
     setNewSubTaskXps({ ...newSubTaskXps, [parentId]: "" });
   };
-  const handleRemoveTask = (_taskId: string, _parentId?: string) => undefined;
+  const handleRemoveTask = () => undefined;
 
   function hasChallengeStartedForUser(challengeStart: Date, userTimeZone: string) {
     if (!challengeStart) return true;
@@ -216,4 +216,3 @@ export function GoalCard({ id, title, description, category, tasks, challenge, g
     </Card>
   );
 }
-

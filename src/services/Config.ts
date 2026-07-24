@@ -24,10 +24,15 @@ function isNativeRuntime() {
 }
 
 function readNativeEnvConfig() {
+  const appEnv = process.env.EXPO_PUBLIC_APP_ENV || "production";
   const publicURL = process.env.EXPO_PUBLIC_APP_PUBLIC_URL || "";
   const scheme = process.env.EXPO_PUBLIC_APP_SCHEME || "";
   const twaURL = process.env.EXPO_PUBLIC_TELEGRAM_BOT_URL || "";
   const apiBaseURL = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+
+  if (appEnv !== "production" && (!apiBaseURL || !publicURL)) {
+    throw new Error(`Safe configuration stop: ${appEnv} builds require EXPO_PUBLIC_API_BASE_URL and EXPO_PUBLIC_APP_PUBLIC_URL`);
+  }
 
   if (!publicURL && !scheme && !twaURL && !apiBaseURL) {
     return null;
@@ -120,17 +125,20 @@ const Config: ConfigInterface = {
         }
 
         const nextData = envResponse.data as Partial<ConfigInterface["data"]>;
+        const localApiBaseURL = import.meta.env.VITE_API_BASE_URL || "";
+        const localPublicURL = import.meta.env.VITE_APP_PUBLIC_URL || "";
+        const localTelegramBotURL = import.meta.env.VITE_TELEGRAM_BOT_URL || "";
         this.data = {
           app: {
-            publicURL: nextData.app?.publicURL || "",
+            publicURL: localPublicURL || nextData.app?.publicURL || "",
             scheme: nextData.app?.scheme || "",
           },
           api: {
             http: {
-              baseURL: nextData.api?.http?.baseURL || "",
+              baseURL: localApiBaseURL || nextData.api?.http?.baseURL || "",
             },
             telegram: {
-              twaURL: nextData.api?.telegram?.twaURL || "",
+              twaURL: localTelegramBotURL || nextData.api?.telegram?.twaURL || "",
             },
           },
         };

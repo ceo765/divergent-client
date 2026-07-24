@@ -183,7 +183,7 @@ export function GoalsScreenContent({
   }, [focusedGoalId, itemOffsets]);
 
   const showInitialLoading = loading && goals.length === 0;
-  const showOnboarding = onboarding.ready && !onboarding.isComplete;
+  const showOnboarding = false;
   const showFilteredEmpty = goals.length === 0 && hasGoals;
   const showTrueEmpty = goals.length === 0 && !hasGoals;
   const onboardingReward = rewards.find((item) => item.sourceKey === "onboarding_completion") ?? null;

@@ -9,6 +9,7 @@ import { createGoalsSlice } from "@/stores/slices/goals";
 import { createOnboardingSlice } from "@/stores/slices/onboarding";
 import { createRemindersSlice } from "@/stores/slices/reminders";
 import { createRewardsSlice } from "@/stores/slices/rewards";
+import { createMissionsSlice } from "@/stores/slices/missions";
 import type { AppStore } from "@/stores/types";
 
 export const useAppStore = create<AppStore>((set, get) => ({
@@ -21,4 +22,5 @@ export const useAppStore = create<AppStore>((set, get) => ({
   ...createRewardsSlice(set, get, undefined as never),
   ...createRemindersSlice(set, get, undefined as never),
   ...createAiSlice(set, get, undefined as never),
+  ...createMissionsSlice(set, get, undefined as never),
 }));

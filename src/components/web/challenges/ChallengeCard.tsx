@@ -29,6 +29,8 @@ interface Props {
   onOpenLink?: (id: string) => void;
   onOpenParticipants?: (id: string) => void;
   onSelect?: (challenge: Challenge) => void;
+  onReport?: (id: string) => void;
+  onChat?: (id: string) => void;
 }
 
 export function ChallengeCard({
@@ -41,6 +43,8 @@ export function ChallengeCard({
   onOpenLink,
   onOpenParticipants,
   onSelect,
+  onReport,
+  onChat,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
@@ -59,6 +63,7 @@ export function ChallengeCard({
     hasStarted,
     isCreator,
     isParticipant,
+    participant,
     progress,
   } = getChallengeDerivedState(challenge, user!.id);
 
@@ -96,7 +101,7 @@ export function ChallengeCard({
       className={`
         mb-2 break-inside-avoid
         hover:shadow-md transition-all
-        ${(hasEnded || hasStarted) && !isParticipant ? "opacity-60" : ""}
+        ${(hasEnded || hasStarted || participant?.status === "REMOVED") && !isParticipant ? "opacity-60" : ""}
       `}
     >
       <CardHeader>
@@ -109,6 +114,7 @@ export function ChallengeCard({
             <div className="flex flex-wrap gap-2">
               {(isCreator && <Badge variant="outline">{t("common.created_by")}</Badge>) ||
                 (isParticipant && <Badge variant="outline">{t("common.participating")}</Badge>)}
+              {participant?.status === "REMOVED" && <Badge variant="destructive">Исключён</Badge>}
               {challengeStatus !== "ACTIVE" && (
                 <Badge
                   className={
@@ -150,7 +156,26 @@ export function ChallengeCard({
       </CardHeader>
 
       <CardContent className="space-y-2">
-        {isParticipant && (
+        {isParticipant && challenge.personalGoalsEnabled && (
+          <div className="space-y-2 pb-2">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">{challenge.metricName || "Результат"}</span>
+              <span className="font-medium">
+                {(participant?.currentValue ?? 0).toLocaleString("ru-RU")} / {(participant?.targetValue ?? 0).toLocaleString("ru-RU")} {participant?.unit || challenge.metricUnit || ""}
+              </span>
+            </div>
+            <Progress value={progress * 100} className="h-2" />
+          </div>
+        )}
+
+        {isParticipant && participant && participant.missCount > 0 && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            Пропуски: {participant.missCount} из {challenge.allowedMisses ?? 1} допустимых.
+            {participant.missCount >= (challenge.allowedMisses ?? 1) && " Следующий пропуск приведёт к исключению."}
+          </div>
+        )}
+
+        {isParticipant && !challenge.personalGoalsEnabled && (
           <div className="pb-2">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-muted-foreground">{t("goals.progress")}</span>
@@ -162,7 +187,7 @@ export function ChallengeCard({
           </div>
         )}
 
-        <Collapsible open={isGoalsOpen} onOpenChange={setIsGoalsOpen}>
+        {!challenge.personalGoalsEnabled && <Collapsible open={isGoalsOpen} onOpenChange={setIsGoalsOpen}>
           <CollapsibleTrigger asChild>
             <Button variant="transparent" className="w-full justify-between" onClick={(e) => e.stopPropagation()}>
               <span>{t("challenges.goals")}</span>
@@ -181,7 +206,7 @@ export function ChallengeCard({
               </div>
             ))}
           </CollapsibleContent>
-        </Collapsible>
+        </Collapsible>}
 
         {challenge.rules && (
           <Collapsible open={isRulesOpen} onOpenChange={setIsRulesOpen}>
@@ -249,7 +274,17 @@ export function ChallengeCard({
               </Button>
             </div>
           )}
-          {!isParticipant && onAccept && !hasStarted && !hasEnded && (
+          {onReport && isParticipant && challenge.personalGoalsEnabled && (
+            <div className="flex justify-center py-2">
+              <Button onClick={(event) => (event.stopPropagation(), onReport(challenge.id))}>Сдать отчёт</Button>
+            </div>
+          )}
+          {onChat && (isParticipant || isCreator) && (
+            <div className="flex justify-center py-2">
+              <Button variant="outline" onClick={(event) => (event.stopPropagation(), onChat(challenge.id))}>Общий чат</Button>
+            </div>
+          )}
+          {!participant && onAccept && !hasStarted && !hasEnded && (
             <div className="flex justify-center py-2">
               <Button
                 className="bg-blue-600 text-white hover:bg-blue-700"
@@ -283,5 +318,3 @@ export function ChallengeCard({
     </Card>
   );
 }
-
-

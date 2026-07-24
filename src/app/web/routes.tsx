@@ -21,6 +21,7 @@ const RemindersView = lazy(() => import("@/views/web/reminders"));
 const RewardsView = lazy(() => import("@/views/web/rewards"));
 const SettingsView = lazy(() => import("@/views/web/settings"));
 const SupportView = lazy(() => import("@/views/web/support"));
+const MissionsView = lazy(() => import("@/views/web/missions"));
 
 function RouteFallback() {
   return <AppLoader />;
@@ -64,7 +65,7 @@ export function renderProductWebRoutes() {
       <Route path="/rewards" element={renderProtectedWeb(<RewardsView />)} />
       <Route path="/reminders" element={renderProtectedWeb(<RemindersView />)} />
       <Route path="/progress" element={renderProtectedWeb(<ProgressView />)} />
+      <Route path="/missions" element={renderProtectedWeb(<MissionsView />)} />
     </>
   );
 }
-

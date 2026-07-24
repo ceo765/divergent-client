@@ -11,7 +11,6 @@ import {
 } from "@/components/web/goals-screen/Sections";
 import { useOnboardingChecklist } from "@/shared/screens/onboarding/useOnboardingChecklist";
 import { useGoalsScreen } from "@/shared/screens/goals/useGoalsScreen";
-import type { Goal } from "@/types";
 
 export default function GoalsScreen() {
   const { t } = useTranslation();
@@ -110,7 +109,7 @@ export default function GoalsScreen() {
     await removeGoal(id);
   };
 
-  const onDraftAdded = (_goal: Goal) => {
+  const onDraftAdded = () => {
     // no-op on web for now
   };
 

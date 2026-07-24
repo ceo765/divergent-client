@@ -118,6 +118,16 @@ export function ChallengeDetailsSheet({
                             {t("challenges.reports_count", { count: userReports.length })}
                           </Text>
                         </View>
+                        <View style={{ backgroundColor: appPalette.semantic.warningSurface, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 }}>
+                          <Text style={{ color: appPalette.semantic.warningText, fontFamily: "Montserrat", fontSize: 12, lineHeight: 18 }}>
+                            Пропуски: {participant.missCount}
+                          </Text>
+                        </View>
+                        {participant.status === "REMOVED" && (
+                          <View style={{ backgroundColor: appPalette.semantic.dangerSurface, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 }}>
+                            <Text style={{ color: appPalette.semantic.dangerText, fontFamily: "Montserrat", fontSize: 12, lineHeight: 18 }}>Исключён</Text>
+                          </View>
+                        )}
                         {participant.userId === challenge.creatorId && (
                           <View style={{ backgroundColor: appPalette.semantic.violetSurface, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 }}>
                             <Text style={{ color: appPalette.semantic.violetText, fontFamily: "Montserrat", fontSize: 12, lineHeight: 18 }}>{t("common.created_by")}</Text>

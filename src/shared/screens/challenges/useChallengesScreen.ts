@@ -16,6 +16,7 @@ export function useChallengesScreen(options: {
     addChallenge,
     updateChallenge,
     acceptChallenge,
+    joinChallengeWithPersonalGoal,
     leaveChallenge,
     payChallenge,
     getReports,
@@ -33,6 +34,9 @@ export function useChallengesScreen(options: {
   const [reportsDialogOpen, setReportsDialogOpen] = useState(false);
   const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | undefined>();
+  const [personalJoinChallenge, setPersonalJoinChallenge] = useState<Challenge | null>(null);
+  const [checkInChallenge, setCheckInChallenge] = useState<Challenge | null>(null);
+  const [chatChallenge, setChatChallenge] = useState<Challenge | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [participants, setParticipants] = useState<ChallengeParticipant[]>([]);
   const [paymentSyncStatus, setPaymentSyncStatus] = useState<{
@@ -164,8 +168,22 @@ export function useChallengesScreen(options: {
       return { status: "payment_required" as const, challengeId: challenge.id };
     }
 
+    if (challenge.personalGoalsEnabled) {
+      setAcceptDialogOpen(false);
+      setPersonalJoinChallenge(challenge);
+      return { status: "ignored" as const, challengeId: challenge.id };
+    }
+
     await acceptChallenge(challenge);
     return { status: "accepted" as const, challengeId: challenge.id };
+  };
+
+  const joinWithPersonalGoal = async (
+    challenge: Challenge,
+    goal: Parameters<typeof joinChallengeWithPersonalGoal>[1],
+  ) => {
+    await joinChallengeWithPersonalGoal(challenge, goal);
+    setPersonalJoinChallenge(null);
   };
 
   const selectPaymentMethod = async (method: PaymentMethod) => {
@@ -229,6 +247,9 @@ export function useChallengesScreen(options: {
     reportsDialogOpen,
     acceptDialogOpen,
     selectedChallenge,
+    personalJoinChallenge,
+    checkInChallenge,
+    chatChallenge,
     paymentSyncStatus,
     setPaymentDialogOpen,
     setLeaveDialogOpen,
@@ -246,10 +267,15 @@ export function useChallengesScreen(options: {
     downloadChallengeReport,
     closeReportsDialog,
     acceptSelectedChallenge,
+    joinWithPersonalGoal,
+    closePersonalJoinDialog: () => setPersonalJoinChallenge(null),
+    openCheckInDialog: (id: string) => setCheckInChallenge(challenges.find((item) => item.id === id) ?? null),
+    closeCheckInDialog: () => setCheckInChallenge(null),
+    openChatDialog: (id: string) => setChatChallenge(challenges.find((item) => item.id === id) ?? null),
+    closeChatDialog: () => setChatChallenge(null),
     selectPaymentMethod,
     kickChallengeParticipant,
     openChallengeLink,
     clearPaymentSyncStatus: () => setPaymentSyncStatus(null),
   };
 }
-

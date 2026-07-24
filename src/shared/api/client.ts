@@ -2,11 +2,15 @@
 import { readDownloadResponse } from "@/platform/download";
 import { streamFetch } from "@/platform/streamFetch";
 import { clearSessionToken, readSessionToken, writeSessionToken } from "@/platform/session";
-import { createReportUploadBody } from "@/platform/upload";
+import { createChallengePhotoUploadBody, createReportUploadBody } from "@/platform/upload";
 import type {
   AIChatResponse,
   Challenge,
   ChallengeApi,
+  ChallengeCheckIn,
+  ChallengeCheckInInput,
+  ChallengeGroupMessage,
+  ChallengeParticipant,
   ChallengeInput,
   FriendInput,
   FriendSummary,
@@ -16,6 +20,9 @@ import type {
   ReportUploadPayload,
   Reward,
   User,
+  PersonalChallengeGoalInput,
+  MissionKey,
+  MissionState,
 } from "@/types";
 
 const API_TIMEOUT_MS = 15000;
@@ -343,6 +350,99 @@ export async function getParticipants(challengeId: string) {
   return await fetchJSON(`/api/challenges/${challengeId}/participants`, {
     method: "GET",
   });
+}
+
+export async function joinChallengeWithPersonalGoal(
+  challengeId: string,
+  goal: PersonalChallengeGoalInput,
+): Promise<ChallengeParticipant> {
+  return fetchJSON(`/api/challenges/${challengeId}/join`, {
+    method: "POST",
+    body: JSON.stringify(goal),
+  });
+}
+
+export async function getMyChallengePlan(challengeId: string): Promise<ChallengeParticipant> {
+  return fetchJSON(`/api/challenges/${challengeId}/my-plan`);
+}
+
+export async function updateMyChallengePlan(
+  challengeId: string,
+  goal: Partial<PersonalChallengeGoalInput>,
+): Promise<ChallengeParticipant> {
+  return fetchJSON(`/api/challenges/${challengeId}/my-plan`, {
+    method: "PATCH",
+    body: JSON.stringify(goal),
+  });
+}
+
+export async function getChallengeCheckIns(challengeId: string): Promise<ChallengeCheckIn[]> {
+  return fetchJSON(`/api/challenges/${challengeId}/check-ins`);
+}
+
+export async function submitChallengeCheckIn(
+  challengeId: string,
+  input: ChallengeCheckInInput,
+): Promise<ChallengeCheckIn> {
+  return fetchJSON(`/api/challenges/${challengeId}/check-ins`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function getChallengeMessages(challengeId: string): Promise<ChallengeGroupMessage[]> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages`);
+}
+
+export async function sendChallengeMessage(challengeId: string, content: string): Promise<ChallengeGroupMessage> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function sendChallengePhoto(challengeId: string, photo: ReportUploadPayload): Promise<ChallengeGroupMessage> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages/photo`, {
+    method: "POST",
+    body: createChallengePhotoUploadBody(photo),
+  });
+}
+
+export async function getMissions(): Promise<MissionState> {
+  return fetchJSON("/api/missions");
+}
+
+export async function markMissionIntroSeen(): Promise<MissionState> {
+  return fetchJSON("/api/missions/intro-seen", { method: "POST", body: JSON.stringify({}) });
+}
+
+export async function claimMissionReward(missionKey: MissionKey): Promise<MissionState & { user: Pick<User, "xp" | "level" | "xpInCurrentLevel" | "requiredXp"> }> {
+  return fetchJSON(`/api/missions/${missionKey}/claim`, { method: "POST", body: JSON.stringify({}) });
+}
+
+export async function recordProgressViewed(): Promise<MissionState> {
+  return fetchJSON("/api/missions/events/progress-viewed", { method: "POST", body: JSON.stringify({}) });
+}
+
+export async function getChallengePhoto(imageUrl: string): Promise<Blob> {
+  const response = await fetchWithAuth(imageUrl);
+  if (!response.ok) throw new Error(`Failed to load challenge photo: ${response.status}`);
+  return response.blob();
+}
+
+export function resolveApiUrl(path?: string | null) {
+  return path ? `${Config.data.api.http.baseURL}${path}` : "";
+}
+
+export async function editChallengeMessage(challengeId: string, messageId: string, content: string): Promise<ChallengeGroupMessage> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages/${messageId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function deleteChallengeMessage(challengeId: string, messageId: string): Promise<ChallengeGroupMessage> {
+  return fetchJSON(`/api/challenges/${challengeId}/messages/${messageId}`, { method: "DELETE" });
 }
 
 export async function getActivity(goalId: string) {

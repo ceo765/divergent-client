@@ -48,8 +48,14 @@ const Config = {
   init() {
     if (!p) {
       p = new Promise((resolve) => {
-        const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL || DEFAULT_NATIVE_CONFIG.api.http.baseURL;
-        const publicURL = process.env.EXPO_PUBLIC_APP_PUBLIC_URL || DEFAULT_NATIVE_CONFIG.app.publicURL;
+        const appEnv = process.env.EXPO_PUBLIC_APP_ENV || "production";
+        const configuredBaseURL = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+        const configuredPublicURL = process.env.EXPO_PUBLIC_APP_PUBLIC_URL || "";
+        if (appEnv !== "production" && (!configuredBaseURL || !configuredPublicURL)) {
+          throw new Error(`Safe configuration stop: ${appEnv} builds require EXPO_PUBLIC_API_BASE_URL and EXPO_PUBLIC_APP_PUBLIC_URL`);
+        }
+        const baseURL = configuredBaseURL || DEFAULT_NATIVE_CONFIG.api.http.baseURL;
+        const publicURL = configuredPublicURL || DEFAULT_NATIVE_CONFIG.app.publicURL;
         const scheme = process.env.EXPO_PUBLIC_APP_SCHEME || DEFAULT_NATIVE_CONFIG.app.scheme;
 
         this.data = {

@@ -36,6 +36,7 @@ export async function configureNativePushNotifications() {
 export function addNativePushResponseListener(
   _listener: (response: PushReminderResponse) => void | Promise<void>
 ) {
+  void _listener;
   return {
     remove() {
       return;

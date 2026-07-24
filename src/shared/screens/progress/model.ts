@@ -1,8 +1,8 @@
 import dayjs from "dayjs";
-import isoWeek from "dayjs/plugin/isoWeek";
+import isoWeek from "dayjs/plugin/isoWeek.js";
 
-import { formatStreakPeriodLabel } from "@/shared/display/streak";
-import type { Goal, GoalActivity, GoalPeriod, GridItem } from "@/types";
+import { formatStreakPeriodLabel } from "../../display/streak.ts";
+import type { Goal, GoalActivity, GoalPeriod, GridItem } from "../../../types/index.ts";
 
 dayjs.extend(isoWeek);
 

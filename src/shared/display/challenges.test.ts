@@ -67,3 +67,51 @@ test("derives challenge state for participant", () => {
   assert.equal(state.progress, 1);
   assert.equal(state.challengeStatus, "COMPLETED");
 });
+
+test("derives personal challenge progress from participant plan and fact", () => {
+  const state = getChallengeDerivedState(
+    {
+      id: "challenge-personal",
+      creatorId: "creator-1",
+      title: "Sales sprint",
+      goals: [],
+      personalGoalsEnabled: true,
+      participants: [{ userId: "user-1", targetValue: 10_000_000, currentValue: 7_000_000 }],
+    } as never,
+    "user-1",
+  );
+
+  assert.equal(state.progress, 0.7);
+  assert.equal(state.challengeStatus, "ACTIVE");
+});
+
+test("does not complete an empty legacy challenge", () => {
+  const state = getChallengeDerivedState(
+    {
+      id: "challenge-empty",
+      creatorId: "creator-1",
+      title: "Empty",
+      goals: [],
+      participants: [{ userId: "user-1" }],
+    } as never,
+    "user-1",
+  );
+
+  assert.equal(state.challengeStatus, "ACTIVE");
+});
+
+test("does not treat an excluded user as an active participant", () => {
+  const state = getChallengeDerivedState(
+    {
+      id: "challenge-removed",
+      creatorId: "creator-1",
+      title: "Removed participant",
+      goals: [],
+      participants: [{ userId: "user-1", status: "REMOVED", missCount: 2 }],
+    } as never,
+    "user-1",
+  );
+
+  assert.equal(state.isParticipant, false);
+  assert.equal(state.participant?.status, "REMOVED");
+});

@@ -5,7 +5,7 @@ import { useAppStore } from "@/stores/useAppStore";
 export default function TimezoneSelector() {
   const { user, updateUser } = useAppStore();
   const { t } = useTranslation();
-  // @ts-ignore
+  // @ts-expect-error supportedValuesOf is available in modern browsers but absent from the ES2020 typings.
   const zones = Intl.supportedValuesOf("timeZone");
 
   const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {

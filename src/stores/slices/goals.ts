@@ -107,6 +107,7 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
         ),
       });
       await completeGoalOnboardingSteps(get, updatedGoal);
+      await get().loadMissions();
     } catch (err) {
       console.error(err);
     } finally {
@@ -191,7 +192,7 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
         }
       }
 
-      if (goal.challenges.length) {
+      if (goal.challenge) {
         const challenges = await api.fetchChallenges();
         set({ challenges });
       }
