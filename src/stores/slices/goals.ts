@@ -192,7 +192,7 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
         }
       }
 
-      if (goal.challenges.length) {
+      if (goal.challenge) {
         const challenges = await api.fetchChallenges();
         set({ challenges });
       }
