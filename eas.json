@@ -28,7 +28,11 @@
       "extends": "base",
       "environment": "preview",
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "staging"
+        "EXPO_PUBLIC_APP_ENV": "staging",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.divergentclub.ru",
+        "EXPO_PUBLIC_APP_PUBLIC_URL": "https://staging.divergentclub.ru",
+        "EXPO_PUBLIC_APP_SCHEME": "divergent",
+        "EXPO_PUBLIC_TELEGRAM_BOT_URL": "https://t.me/divergent_app_test_bot/start"
       },
       "distribution": "store",
       "autoIncrement": true,
