@@ -92,7 +92,7 @@ export interface AppStoreActions {
   completeOnboardingStep: (step: OnboardingStepKey) => Promise<void>;
   getActivity: (goalId: string) => Promise<GoalActivity>;
   getGoalXp: (goalId: string) => Promise<number>;
-  toggleTask: (taskId: string) => Promise<void>;
+  toggleTask: (taskId: string, setLog?: { weight?: number | null; reps?: number | null }) => Promise<void>;
   addReport: (taskId: string, data: ReportUploadPayload) => Promise<void>;
   getReports: (challengeId: string) => Promise<Report[]>;
   getParticipants: (challengeId: string) => Promise<ChallengeParticipant[]>;

@@ -324,10 +324,32 @@ export async function deleteReward(id: string) {
   return fetchJSON(`/api/rewards/${id}`, { method: "DELETE" });
 }
 
-export async function toggleTask(taskId: string) {
+export async function toggleTask(
+  taskId: string,
+  setLog?: { weight?: number | null; reps?: number | null }
+) {
   return fetchJSON(`/api/tasks/toggle`, {
     method: "POST",
-    body: JSON.stringify({ taskId }),
+    body: JSON.stringify({ taskId, ...(setLog ?? {}) }),
+  });
+}
+
+export type SetHistory = {
+  last: { weight: number | null; reps: number | null } | null;
+  history: { id: string; weight: number | null; reps: number | null; createdAt: string }[];
+};
+
+export async function getSetHistory(taskId: string) {
+  return fetchJSON(`/api/tasks/${taskId}/set-history`) as Promise<SetHistory>;
+}
+
+export async function updateCompletionSetLog(
+  completionId: string,
+  setLog: { weight?: number | null; reps?: number | null }
+) {
+  return fetchJSON(`/api/tasks/completion/${completionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(setLog),
   });
 }
 

@@ -161,10 +161,10 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
     }
   },
 
-  toggleTask: async (taskId) => {
+  toggleTask: async (taskId, setLog) => {
     set({ loading: true });
     try {
-      const { goal, user } = await api.toggleTask(taskId);
+      const { goal, user } = await api.toggleTask(taskId, setLog);
 
       set({
         goals: get().goals.map((item) => (item.id === goal.id ? goal : item)),
