@@ -10,6 +10,7 @@ import {
   DueDateSection,
   GoalPeriodSection,
   GoalTypeSection,
+  WorkoutToggleSection,
   ProgressFieldsSection,
   RewardSection,
   TaskXpTargetSection,
@@ -72,6 +73,7 @@ export function GoalFormSheet({
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState(categories[0]?.value ?? "personal");
   const [goalType, setGoalType] = useState<GoalType>("TASK");
+  const [isWorkout, setIsWorkout] = useState(false);
   const [goalPeriod, setGoalPeriod] = useState<GoalPeriod>("NONE");
   const [dueDate, setDueDate] = useState("");
   const [currentValue, setCurrentValue] = useState("");
@@ -104,6 +106,7 @@ export function GoalFormSheet({
       setDescription(goal.description ?? "");
       setCategory(goal.category);
       setGoalType(goal.goalType);
+      setIsWorkout(Boolean(goal.isWorkout));
       setGoalPeriod(goal.goalPeriod);
       setDueDate(goal.dueDate ?? "");
       setCurrentValue(goal.currentValue?.toString() ?? "");
@@ -123,6 +126,7 @@ export function GoalFormSheet({
     setDescription("");
     setCategory(categories[0]?.value ?? "personal");
     setGoalType("TASK");
+    setIsWorkout(false);
     setGoalPeriod("NONE");
     setDueDate("");
     setCurrentValue("");
@@ -218,6 +222,7 @@ export function GoalFormSheet({
         currentValue: goalType === "PROGRESS" && currentValue.trim() !== "" ? Number(currentValue) : undefined,
         targetValue: goalType === "PROGRESS" && targetValue.trim() !== "" ? Number(targetValue) : undefined,
         goalType,
+        isWorkout: goalType === "TASK" ? isWorkout : false,
         goalPeriod,
         rewardId: activeRewardId,
         challenge: goal?.challenge,
@@ -281,6 +286,7 @@ export function GoalFormSheet({
         numberOfLines={4}
       />
       <GoalTypeSection goalType={goalType} onChange={setGoalType} />
+      {goalType === "TASK" && <WorkoutToggleSection value={isWorkout} onChange={setIsWorkout} />}
       <GoalPeriodSection goalPeriod={goalPeriod} onChange={setGoalPeriod} />
       <DueDateSection dueDate={dueDate} onChange={setDueDate} />
       <CategorySection categories={categories} category={category} onChange={setCategory} onAddCategory={onAddCategory} />
