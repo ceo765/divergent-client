@@ -8,9 +8,10 @@ type UseAiChatSessionArgs = {
   open: boolean;
   onDraftAdded: (goal: Goal) => void;
   initialPrompt?: string;
+  category?: string | null;
 };
 
-export function useAiChatSession({ open, onDraftAdded, initialPrompt }: UseAiChatSessionArgs) {
+export function useAiChatSession({ open, onDraftAdded, initialPrompt, category }: UseAiChatSessionArgs) {
   const { t } = useTranslation();
   const { chatAIStream, getChatHistory } = useAppStore();
 
@@ -49,7 +50,7 @@ export function useAiChatSession({ open, onDraftAdded, initialPrompt }: UseAiCha
     const loadHistory = async () => {
       setHistoryLoading(true);
       try {
-        const storedHistory = await getChatHistory();
+        const storedHistory = await getChatHistory(category);
         setHistory(storedHistory ?? []);
       } catch {
         setHistory([]);
@@ -59,7 +60,7 @@ export function useAiChatSession({ open, onDraftAdded, initialPrompt }: UseAiCha
     };
 
     void loadHistory();
-  }, [open, getChatHistory, initialPrompt]);
+  }, [open, getChatHistory, initialPrompt, category]);
 
   useEffect(() => {
     if (!loading || generationStartedAt == null) {
@@ -118,7 +119,7 @@ export function useAiChatSession({ open, onDraftAdded, initialPrompt }: UseAiCha
         onDraftStatus: () => {
           setDraftPendingMessageId(nextStreamingMessageId);
         },
-      });
+      }, category);
 
       if (data.message) {
         if (data.goalDraft) {

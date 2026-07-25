@@ -99,8 +99,8 @@ export interface AppStoreActions {
   kickParticipant: (challengeId: string, userId: string) => Promise<void>;
   downloadReport: (report: Report) => Promise<void>;
   chatAI: (prompt: string) => Promise<AIChatResponse>;
-  chatAIStream: (prompt: string, handlers?: AIChatStreamHandlers) => Promise<AIChatResponse>;
-  getChatHistory: () => Promise<ChatMessage[]>;
+  chatAIStream: (prompt: string, handlers?: AIChatStreamHandlers, category?: string | null) => Promise<AIChatResponse>;
+  getChatHistory: (category?: string | null) => Promise<ChatMessage[]>;
   addDraft: (messageId: string) => Promise<Goal>;
   addReward: (reward: Reward) => Promise<void>;
   deleteReward: (reward: Reward) => Promise<void>;
