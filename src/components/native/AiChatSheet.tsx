@@ -85,17 +85,17 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }:
             <View {...headerPanHandlers} style={{ gap: 8 }}>
               <SheetDragHandle />
               <SelectableText style={{ fontSize: 20, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{category ? `Коуч: ${categories.find((c) => c.value === category)?.label ?? category}` : t("ai.title")}</SelectableText>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }} keyboardShouldPersistTaps="handled">
-                {[{ value: null as string | null, label: "Общий" }, ...categories.map((c) => ({ value: c.value as string | null, label: c.label }))].map((opt) => {
-                  const active = category === opt.value;
-                  return (
-                    <Pressable key={opt.value ?? "__general"} onPress={() => setCategory(opt.value)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: active ? appPalette.brand.primary : appPalette.semantic.borderSubtle, backgroundColor: active ? appPalette.brand.primary : appPalette.semantic.neutralSurfaceStrong }}>
-                      <Text style={{ color: active ? appPalette.semantic.textInverse : appPalette.semantic.textStrong, fontSize: 12, fontWeight: "500", fontFamily: "Montserrat" }}>{opt.label}</Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
             </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }} keyboardShouldPersistTaps="handled" style={{ flexGrow: 0 }}>
+              {[{ value: null as string | null, label: "Общий" }, ...categories.map((c) => ({ value: c.value as string | null, label: c.label }))].map((opt) => {
+                const active = category === opt.value;
+                return (
+                  <Pressable key={opt.value ?? "__general"} onPress={() => setCategory(opt.value)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: active ? appPalette.brand.primary : appPalette.semantic.borderSubtle, backgroundColor: active ? appPalette.brand.primary : appPalette.semantic.neutralSurfaceStrong }}>
+                    <Text style={{ color: active ? appPalette.semantic.textInverse : appPalette.semantic.textStrong, fontSize: 12, fontWeight: "500", fontFamily: "Montserrat" }}>{opt.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
             <ScrollView
               ref={scrollRef}
               contentContainerStyle={{ gap: 10, paddingBottom: 4 }}
