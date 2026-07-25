@@ -50,6 +50,7 @@ export interface Goal {
   targetValue?: number;
   taskXpTarget?: number;
   goalType: GoalType;
+  isWorkout?: boolean;
   goalPeriod: GoalPeriod;
   challengeId?: string;
   challenge?: Challenge;

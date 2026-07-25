@@ -43,8 +43,12 @@ export function useGoalsScreenController(props: {
     onConsumeLinkState?.();
   }, [onConsumeLinkState, openReportForTask, reportTaskId]);
 
-  const handleTaskToggle = async (goalId: string, taskId: string) => {
-    const result = await screen.toggleGoalTask(goalId, taskId);
+  const handleTaskToggle = async (
+    goalId: string,
+    taskId: string,
+    setLog?: { weight?: number | null; reps?: number | null }
+  ) => {
+    const result = await screen.toggleGoalTask(goalId, taskId, setLog);
     showGoalTaskToggleResultAlert(result, t);
   };
 

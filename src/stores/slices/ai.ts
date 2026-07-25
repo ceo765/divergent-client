@@ -19,10 +19,10 @@ export const createAiSlice: StoreSlice<AiSlice> = (set, get) => ({
     }
   },
 
-  chatAIStream: async (message, handlers) => {
+  chatAIStream: async (message, handlers, category) => {
     set({ loading: true });
     try {
-      const response = await api.chatAIStream(message, handlers);
+      const response = await api.chatAIStream(message, handlers, category);
       await get().completeOnboardingStep("used_ai");
       return response;
     } catch (err) {
@@ -33,10 +33,10 @@ export const createAiSlice: StoreSlice<AiSlice> = (set, get) => ({
     }
   },
 
-  getChatHistory: async () => {
+  getChatHistory: async (category) => {
     set({ loading: true });
     try {
-      return await api.getChatHistory();
+      return await api.getChatHistory(category);
     } catch (err) {
       console.error(err);
       return [];

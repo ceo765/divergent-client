@@ -48,7 +48,7 @@ function getGoalStatus(goal: Goal) {
   return "ACTIVE" as const;
 }
 
-export function NativeGoalCardView({ goal, categoryLabel, reward, userTimeZone, autoExpand = false, focused = false, onEdit, onTaskToggle, onAddReminder, onAddProgress, onGoToProgress }: { goal: Goal; categoryLabel: string; reward?: Reward | null; userTimeZone: string; autoExpand?: boolean; focused?: boolean; onEdit?: (id: string) => void; onTaskToggle: (goalId: string, taskId: string) => Promise<void>; onAddReminder?: (id: string) => void; onAddProgress?: (goalId: string, delta: number) => void; onGoToProgress?: (id: string) => void }) {
+export function NativeGoalCardView({ goal, categoryLabel, reward, userTimeZone, autoExpand = false, focused = false, onEdit, onTaskToggle, onAddReminder, onAddProgress, onGoToProgress }: { goal: Goal; categoryLabel: string; reward?: Reward | null; userTimeZone: string; autoExpand?: boolean; focused?: boolean; onEdit?: (id: string) => void; onTaskToggle: (goalId: string, taskId: string, setLog?: { weight?: number | null; reps?: number | null }) => Promise<void>; onAddReminder?: (id: string) => void; onAddProgress?: (goalId: string, delta: number) => void; onGoToProgress?: (id: string) => void }) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(autoExpand);
   const [progressDelta, setProgressDelta] = useState("");

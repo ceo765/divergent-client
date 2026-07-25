@@ -324,10 +324,32 @@ export async function deleteReward(id: string) {
   return fetchJSON(`/api/rewards/${id}`, { method: "DELETE" });
 }
 
-export async function toggleTask(taskId: string) {
+export async function toggleTask(
+  taskId: string,
+  setLog?: { weight?: number | null; reps?: number | null }
+) {
   return fetchJSON(`/api/tasks/toggle`, {
     method: "POST",
-    body: JSON.stringify({ taskId }),
+    body: JSON.stringify({ taskId, ...(setLog ?? {}) }),
+  });
+}
+
+export type SetHistory = {
+  last: { weight: number | null; reps: number | null } | null;
+  history: { id: string; weight: number | null; reps: number | null; createdAt: string }[];
+};
+
+export async function getSetHistory(taskId: string) {
+  return fetchJSON(`/api/tasks/${taskId}/set-history`) as Promise<SetHistory>;
+}
+
+export async function updateCompletionSetLog(
+  completionId: string,
+  setLog: { weight?: number | null; reps?: number | null }
+) {
+  return fetchJSON(`/api/tasks/completion/${completionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(setLog),
   });
 }
 
@@ -463,10 +485,10 @@ export async function kickParticipant(challengeId: string, userId: string) {
   });
 }
 
-async function createAIChatJob(message: string) {
+async function createAIChatJob(message: string, category?: string | null) {
   return (await fetchJSON(`/api/ai/chat`, {
     method: "POST",
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, category: category ?? undefined }),
   })) as AIChatJobResponse;
 }
 
@@ -497,9 +519,9 @@ export async function chatAI(message: string) {
   return waitForAIChatJob(job.id);
 }
 
-export async function chatAIStream(message: string, handlers: AIChatStreamHandlers = {}) {
+export async function chatAIStream(message: string, handlers: AIChatStreamHandlers = {}, category?: string | null) {
   if (!supportsStreamingAiRequests()) {
-    const job = await createAIChatJob(message);
+    const job = await createAIChatJob(message, category);
     handlers.onAccepted?.();
     handlers.onStatus?.("started");
     return waitForAIChatJob(job.id);
@@ -508,7 +530,7 @@ export async function chatAIStream(message: string, handlers: AIChatStreamHandle
   try {
     const res = await fetchWithAuth(`/api/ai/chat/stream`, {
       method: "POST",
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, category: category ?? undefined }),
       timeoutMs: AI_API_TIMEOUT_MS,
     }, streamFetch);
 
@@ -623,9 +645,25 @@ export async function chatAIStream(message: string, handlers: AIChatStreamHandle
   }
 }
 
-export async function getChatHistory() {
-  return await fetchJSON(`/api/ai/chat`, {
+export async function getChatHistory(category?: string | null) {
+  const qs = category ? `?category=${encodeURIComponent(category)}` : "";
+  return await fetchJSON(`/api/ai/chat${qs}`, {
     method: "GET",
+  });
+}
+
+export type CoachPrompt = { category: string; label: string; basePrompt: string | null; recommended: string };
+
+export async function getCoachPrompt(category: string) {
+  return (await fetchJSON(`/api/ai/coach/${encodeURIComponent(category)}/prompt`, {
+    method: "GET",
+  })) as CoachPrompt;
+}
+
+export async function saveCoachPrompt(category: string, basePrompt: string | null) {
+  return await fetchJSON(`/api/ai/coach/${encodeURIComponent(category)}/prompt`, {
+    method: "PUT",
+    body: JSON.stringify({ basePrompt }),
   });
 }
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, TextInput, View } from "react-native";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
@@ -23,6 +23,7 @@ import {
   Swords,
   Target,
 } from "@/components/native/icons";
+import { getSetHistory } from "@/shared/api/client";
 import { formatGoalDate } from "@/shared/display/goals";
 import { isTaskCompletedThisPeriod, sumCompletedTaskXp } from "@/shared/screens/goals/model";
 import type { CategoryType } from "@/shared/domain";
@@ -71,7 +72,70 @@ function SmallAction({ icon, onPress }: { icon: React.ReactNode; onPress?: () =>
   return <Pressable onPress={onPress} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>{icon}</Pressable>;
 }
 
-function TaskTree({ tasks, goalPeriod, onTaskToggle, goalId, level = 0, disabled = false }: { tasks: Task[]; goalPeriod: GoalPeriod; onTaskToggle: (goalId: string, taskId: string) => Promise<void>; goalId: string; level?: number; disabled?: boolean }) {
+function WorkoutSetRow({ task, goalId, goalPeriod, onTaskToggle, disabled }: { task: Task; goalId: string; goalPeriod: GoalPeriod; onTaskToggle: (goalId: string, taskId: string, setLog?: { weight?: number | null; reps?: number | null }) => Promise<void>; disabled: boolean }) {
+  const completed = isTaskCompletedThisPeriod(task, goalPeriod);
+  const [weight, setWeight] = useState("");
+  const [reps, setReps] = useState("");
+  const [last, setLast] = useState<{ weight: number | null; reps: number | null } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    getSetHistory(task.id)
+      .then((h) => {
+        if (!alive) return;
+        setLast(h.last);
+        if (!completed && h.last) {
+          if (h.last.weight != null) setWeight(String(h.last.weight));
+          if (h.last.reps != null) setReps(String(h.last.reps));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [task.id, completed]);
+
+  const parse = (v: string, int = false) => {
+    const s = v.trim().replace(",", ".");
+    if (s === "") return null;
+    const n = int ? parseInt(s, 10) : Number(s);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const onToggle = () => {
+    if (disabled) return;
+    void onTaskToggle(goalId, task.id, { weight: parse(weight), reps: parse(reps, true) });
+  };
+
+  const inputStyle = { flex: 1, minWidth: 0, height: 34, borderWidth: 1, borderColor: appPalette.semantic.borderSubtle, borderRadius: 8, backgroundColor: appPalette.surface.background, paddingHorizontal: 8, color: appPalette.semantic.textStrong, fontSize: 13, textAlign: "center" as const, fontFamily: "Montserrat" };
+
+  return (
+    <View style={{ borderWidth: 1, borderColor: completed ? appPalette.brand.primary : appPalette.semantic.borderSubtle, borderRadius: 14, backgroundColor: appPalette.semantic.neutralSurfaceStrong, paddingHorizontal: 12, paddingVertical: 10, gap: 8 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Pressable onPress={onToggle} hitSlop={8}>
+          <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, borderColor: completed ? appPalette.brand.primary : appPalette.semantic.textSubtle, backgroundColor: completed ? appPalette.brand.primary : appPalette.surface.background, alignItems: "center", justifyContent: "center" }}>
+            {completed && <Text style={{ color: appPalette.semantic.textInverse, fontSize: 13, fontWeight: "700", fontFamily: "Montserrat", lineHeight: 18 }}>✓</Text>}
+          </View>
+        </Pressable>
+        <Text style={{ flex: 1, color: appPalette.semantic.textStrong, fontSize: 12, fontWeight: "400", lineHeight: 16, fontFamily: "Montserrat" }}>{task.title}</Text>
+      </View>
+
+      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <TextInput value={weight} onChangeText={setWeight} keyboardType="decimal-pad" placeholder="кг" placeholderTextColor={appPalette.semantic.textSubtle} editable={!disabled} style={inputStyle} />
+          <Text style={{ color: appPalette.semantic.textSubtle, fontSize: 10, textAlign: "center", fontFamily: "Montserrat" }}>{last?.weight != null ? `пр. раз ${last.weight}` : "вес, кг"}</Text>
+        </View>
+        <Text style={{ color: appPalette.semantic.textSubtle, fontSize: 14, marginTop: 8, fontFamily: "Montserrat" }}>×</Text>
+        <View style={{ flex: 1, gap: 2 }}>
+          <TextInput value={reps} onChangeText={setReps} keyboardType="number-pad" placeholder="повт" placeholderTextColor={appPalette.semantic.textSubtle} editable={!disabled} style={inputStyle} />
+          <Text style={{ color: appPalette.semantic.textSubtle, fontSize: 10, textAlign: "center", fontFamily: "Montserrat" }}>{last?.reps != null ? `пр. раз ${last.reps}` : "повторы"}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function TaskTree({ tasks, goalPeriod, onTaskToggle, goalId, level = 0, disabled = false, isWorkout = false }: { tasks: Task[]; goalPeriod: GoalPeriod; onTaskToggle: (goalId: string, taskId: string, setLog?: { weight?: number | null; reps?: number | null }) => Promise<void>; goalId: string; level?: number; disabled?: boolean; isWorkout?: boolean }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   return (
@@ -80,9 +144,13 @@ function TaskTree({ tasks, goalPeriod, onTaskToggle, goalId, level = 0, disabled
         const completed = isTaskCompletedThisPeriod(task, goalPeriod);
         const hasSubtasks = Boolean(task.subtasks?.length);
         const isOpen = Boolean(expanded[task.id]);
+        const isWorkoutSet = isWorkout && !hasSubtasks;
 
         return (
           <View key={task.id} style={{ gap: 8, marginLeft: level * 12 }}>
+            {isWorkoutSet ? (
+              <WorkoutSetRow task={task} goalId={goalId} goalPeriod={goalPeriod} onTaskToggle={onTaskToggle} disabled={disabled} />
+            ) : (
             <View style={{ borderWidth: 1, borderColor: appPalette.semantic.borderSubtle, borderRadius: 14, backgroundColor: appPalette.semantic.neutralSurfaceStrong, paddingHorizontal: 12, paddingVertical: 10, gap: 8 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                 {hasSubtasks ? (
@@ -114,8 +182,9 @@ function TaskTree({ tasks, goalPeriod, onTaskToggle, goalId, level = 0, disabled
                 )}
               </View>
             </View>
+            )}
 
-            {hasSubtasks && isOpen && <TaskTree tasks={task.subtasks ?? []} goalPeriod={goalPeriod} onTaskToggle={onTaskToggle} goalId={goalId} level={level + 1} disabled={disabled} />}
+            {hasSubtasks && isOpen && <TaskTree tasks={task.subtasks ?? []} goalPeriod={goalPeriod} onTaskToggle={onTaskToggle} goalId={goalId} level={level + 1} disabled={disabled} isWorkout={isWorkout} />}
           </View>
         );
       })}
@@ -226,7 +295,7 @@ export function GoalNumericProgressInput({ progressDelta, onChangeProgressDelta,
   );
 }
 
-export function GoalTaskSection({ goal, isOpen, onToggleOpen, onTaskToggle, disabledTasks }: { goal: Goal; isOpen: boolean; onToggleOpen: () => void; onTaskToggle: (goalId: string, taskId: string) => Promise<void>; disabledTasks: boolean }) {
+export function GoalTaskSection({ goal, isOpen, onToggleOpen, onTaskToggle, disabledTasks }: { goal: Goal; isOpen: boolean; onToggleOpen: () => void; onTaskToggle: (goalId: string, taskId: string, setLog?: { weight?: number | null; reps?: number | null }) => Promise<void>; disabledTasks: boolean }) {
   const { t } = useTranslation();
 
   return (
@@ -235,7 +304,7 @@ export function GoalTaskSection({ goal, isOpen, onToggleOpen, onTaskToggle, disa
         <Text style={{ color: appPalette.semantic.textStrong, fontSize: 12, fontWeight: "500", lineHeight: 18, fontFamily: "Montserrat" }}>{t("goals.tasks")}</Text>
         {isOpen ? <ChevronUp size={18} color={appPalette.semantic.textMuted} /> : <ChevronDown size={18} color={appPalette.semantic.textMuted} />}
       </Pressable>
-      {isOpen && <TaskTree tasks={goal.tasks ?? []} goalPeriod={goal.goalPeriod} onTaskToggle={onTaskToggle} goalId={goal.id} disabled={disabledTasks} />}
+      {isOpen && <TaskTree tasks={goal.tasks ?? []} goalPeriod={goal.goalPeriod} onTaskToggle={onTaskToggle} goalId={goal.id} disabled={disabledTasks} isWorkout={Boolean(goal.isWorkout)} />}
     </View>
   );
 }

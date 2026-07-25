@@ -137,7 +137,11 @@ export function useGoalsScreen(
     return true;
   };
 
-  const toggleGoalTask = async (goalId: string, taskId: string): Promise<ToggleTaskResult> => {
+  const toggleGoalTask = async (
+    goalId: string,
+    taskId: string,
+    setLog?: { weight?: number | null; reps?: number | null }
+  ): Promise<ToggleTaskResult> => {
     const goal = goals.find((item) => item.id === goalId);
     if (!goal) {
       return { status: "ignored" };
@@ -156,7 +160,7 @@ export function useGoalsScreen(
       return { status: "report_required", taskId };
     }
 
-    await toggleTask(taskId);
+    await toggleTask(taskId, setLog);
 
     if (newCompleted) {
       return { status: "completed", xpReward: task.xpReward ?? 0 };
