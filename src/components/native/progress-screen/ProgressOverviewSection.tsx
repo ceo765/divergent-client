@@ -13,6 +13,13 @@ import type { HealthSummary } from "@/services/health";
 
 const CELL = 13;
 const CELL_GAP = 3;
+const WEEKDAY_COL = 22;
+const LABEL_H = 14;
+const CELLS_H = 7 * CELL + 6 * CELL_GAP;
+const RU_MONTHS_SHORT = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const RU_WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+
+type CalWeek = (ProgressOverview["days"][number] | null)[];
 
 function cellColor(status: string) {
   switch (status) {
@@ -54,32 +61,73 @@ function ConsistencyCalendar({ days, selectedDate, onSelectDay }: { days: Progre
     return result;
   }, [days]);
 
+  // Group consecutive week-columns by the month of their first day, so each
+  // month becomes a labelled block separated by a divider line.
+  const blocks = useMemo(() => {
+    const result: { month: number; weeks: CalWeek[] }[] = [];
+    for (const week of weeks) {
+      const first = week.find((d) => d);
+      const month = first ? dayjs(first.date).month() : result.length ? result[result.length - 1].month : 0;
+      const last = result[result.length - 1];
+      if (last && last.month === month) {
+        last.weeks.push(week);
+      } else {
+        result.push({ month, weeks: [week] });
+      }
+    }
+    return result;
+  }, [weeks]);
+
   return (
-    <View style={{ flexDirection: "row", gap: CELL_GAP }}>
-      {weeks.map((week, wi) => (
-        <View key={wi} style={{ gap: CELL_GAP }}>
-          {week.map((day, di) =>
-            day ? (
-              <Pressable
-                key={day.date}
-                onPress={() => onSelectDay(day.date)}
-                hitSlop={2}
-                style={{
-                  width: CELL,
-                  height: CELL,
-                  borderRadius: 3,
-                  backgroundColor: cellColor(day.status),
-                  borderWidth: selectedDate === day.date ? 1.5 : 0,
-                  borderColor: appPalette.semantic.textStrong,
-                }}
-              />
-            ) : (
-              <View key={`${wi}-${di}`} style={{ width: CELL, height: CELL }} />
-            ),
-          )}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+        <View style={{ width: WEEKDAY_COL, marginTop: LABEL_H, gap: CELL_GAP }}>
+          {RU_WEEKDAYS.map((wd, i) => (
+            <View key={wd} style={{ height: CELL, justifyContent: "center" }}>
+              {i % 2 === 0 ? (
+                <Text style={{ color: appPalette.semantic.textSubtle, fontSize: 9, fontFamily: "Montserrat", lineHeight: 11 }}>{wd}</Text>
+              ) : null}
+            </View>
+          ))}
         </View>
-      ))}
-    </View>
+
+        {blocks.map((block, bi) => (
+          <View key={bi} style={{ flexDirection: "row", alignItems: "flex-start" }}>
+            {bi > 0 && (
+              <View style={{ width: 1, height: CELLS_H, marginTop: LABEL_H, marginHorizontal: 5, backgroundColor: appPalette.semantic.borderSubtle }} />
+            )}
+            <View>
+              <Text style={{ height: LABEL_H, color: appPalette.semantic.textMuted, fontSize: 10, fontWeight: "600", fontFamily: "Montserrat", lineHeight: 12 }}>{RU_MONTHS_SHORT[block.month]}</Text>
+              <View style={{ flexDirection: "row", gap: CELL_GAP }}>
+                {block.weeks.map((week, wi) => (
+                  <View key={wi} style={{ gap: CELL_GAP }}>
+                    {week.map((day, di) =>
+                      day ? (
+                        <Pressable
+                          key={day.date}
+                          onPress={() => onSelectDay(day.date)}
+                          hitSlop={2}
+                          style={{
+                            width: CELL,
+                            height: CELL,
+                            borderRadius: 3,
+                            backgroundColor: cellColor(day.status),
+                            borderWidth: selectedDate === day.date ? 1.5 : 0,
+                            borderColor: appPalette.semantic.textStrong,
+                          }}
+                        />
+                      ) : (
+                        <View key={`${wi}-${di}`} style={{ width: CELL, height: CELL }} />
+                      ),
+                    )}
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
