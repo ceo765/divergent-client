@@ -1,13 +1,14 @@
-import { useMemo } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Modal, ScrollView, Text, View } from "react-native";
 import dayjs from "dayjs";
 
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 import { SurfaceCard } from "@/components/native/SurfaceCard";
 import { categoryConfig } from "@/components/native/GoalCardParts";
-import { Activity, Flame, Footprints, Target } from "@/components/native/icons";
+import { Activity, CircleCheck, Flame, Footprints, Target, X } from "@/components/native/icons";
+import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
-import type { CategoryOption, CategoryType, ProgressOverview } from "@/types";
+import type { CategoryOption, CategoryType, ProgressDayDetail, ProgressOverview } from "@/types";
 import type { HealthSummary } from "@/services/health";
 
 const CELL = 13;
@@ -16,11 +17,13 @@ const CELL_GAP = 3;
 function cellColor(status: string) {
   switch (status) {
     case "full":
-      return appPalette.semantic.successStrong;
+      return appPalette.semantic.successStrong; // зелёный - все цели дня
+    case "partial":
+      return "#eab308"; // жёлтый - часть
     case "missed":
-      return appPalette.semantic.dangerBorder;
+      return appPalette.semantic.dangerStrong; // красный - ничего
     default:
-      return appPalette.semantic.borderSubtle;
+      return appPalette.semantic.borderSubtle; // серый - целей не было
   }
 }
 
@@ -36,7 +39,7 @@ function StatPill({ icon, value, label }: { icon: React.ReactNode; value: string
   );
 }
 
-function ConsistencyCalendar({ days }: { days: ProgressOverview["days"] }) {
+function ConsistencyCalendar({ days, selectedDate, onSelectDay }: { days: ProgressOverview["days"]; selectedDate?: string; onSelectDay: (date: string) => void }) {
   const weeks = useMemo(() => {
     if (!days.length) return [] as (ProgressOverview["days"][number] | null)[][];
     const leading = (dayjs(days[0].date).day() + 6) % 7; // Monday-first index
@@ -55,17 +58,25 @@ function ConsistencyCalendar({ days }: { days: ProgressOverview["days"] }) {
     <View style={{ flexDirection: "row", gap: CELL_GAP }}>
       {weeks.map((week, wi) => (
         <View key={wi} style={{ gap: CELL_GAP }}>
-          {week.map((day, di) => (
-            <View
-              key={day?.date ?? `${wi}-${di}`}
-              style={{
-                width: CELL,
-                height: CELL,
-                borderRadius: 3,
-                backgroundColor: day ? cellColor(day.status) : "transparent",
-              }}
-            />
-          ))}
+          {week.map((day, di) =>
+            day ? (
+              <Pressable
+                key={day.date}
+                onPress={() => onSelectDay(day.date)}
+                hitSlop={2}
+                style={{
+                  width: CELL,
+                  height: CELL,
+                  borderRadius: 3,
+                  backgroundColor: cellColor(day.status),
+                  borderWidth: selectedDate === day.date ? 1.5 : 0,
+                  borderColor: appPalette.semantic.textStrong,
+                }}
+              />
+            ) : (
+              <View key={`${wi}-${di}`} style={{ width: CELL, height: CELL }} />
+            ),
+          )}
         </View>
       ))}
     </View>
@@ -74,8 +85,9 @@ function ConsistencyCalendar({ days }: { days: ProgressOverview["days"] }) {
 
 function Legend() {
   const items: { label: string; status: string }[] = [
-    { label: "выполнено", status: "full" },
-    { label: "пропуск", status: "missed" },
+    { label: "все", status: "full" },
+    { label: "часть", status: "partial" },
+    { label: "ничего", status: "missed" },
     { label: "нет цели", status: "empty" },
   ];
   return (
@@ -186,6 +198,100 @@ function AreaSummaries({ categories, resolveLabel }: { categories: ProgressOverv
   );
 }
 
+function DayDetailSheet({
+  date,
+  detail,
+  loading,
+  resolveLabel,
+  onClose,
+}: {
+  date: string | null;
+  detail?: ProgressDayDetail;
+  loading: boolean;
+  resolveLabel: (value: string) => string;
+  onClose: () => void;
+}) {
+  const grouped = useMemo(() => {
+    const map = new Map<string, { goalTitle: string; category: string; items: ProgressDayDetail["completed"] }>();
+    for (const c of detail?.completed ?? []) {
+      const entry = map.get(c.goalId) ?? { goalTitle: c.goalTitle, category: c.category, items: [] };
+      entry.items.push(c);
+      map.set(c.goalId, entry);
+    }
+    return Array.from(map.values());
+  }, [detail]);
+
+  return (
+    <Modal visible={!!date} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: appPalette.surface.overlay, justifyContent: "flex-end" }}>
+        <View style={{ maxHeight: "80%", backgroundColor: appPalette.surface.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 24 }}>
+              {date ? dayjs(date).format("D MMMM, dd") : ""}
+            </Text>
+            <Pressable onPress={onClose} hitSlop={8}>
+              <X size={22} color={appPalette.semantic.textMuted} />
+            </Pressable>
+          </View>
+
+          {loading ? (
+            <View style={{ paddingVertical: 28, alignItems: "center" }}>
+              <ActivityIndicator size="large" color={appPalette.brand.primary} />
+            </View>
+          ) : (
+            <ScrollView contentContainerStyle={{ gap: 16, paddingBottom: 8 }}>
+              <View style={{ gap: 8 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <CircleCheck size={16} color={appPalette.semantic.successStrong} />
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 18 }}>
+                    Выполнено ({detail?.completed.length ?? 0})
+                  </Text>
+                </View>
+                {grouped.length === 0 ? (
+                  <Text style={{ fontSize: 12, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat", lineHeight: 18 }}>В этот день отметок не было.</Text>
+                ) : (
+                  grouped.map((g) => (
+                    <View key={g.goalTitle} style={{ backgroundColor: appPalette.semantic.neutralSurfaceStrong, borderRadius: 12, padding: 10, gap: 6 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "600", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 16 }}>{g.goalTitle}</Text>
+                      {g.items.map((it) => (
+                        <View key={it.completionId} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                          <Text style={{ flex: 1, fontSize: 12, color: appPalette.semantic.textMuted, fontFamily: "Montserrat", lineHeight: 16 }}>
+                            {it.taskTitle}
+                            {it.weight != null ? `  ·  ${it.weight}${it.reps != null ? `×${it.reps}` : ""}` : ""}
+                          </Text>
+                          <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat", lineHeight: 15 }}>{it.time}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ))
+                )}
+              </View>
+
+              {(detail?.missed.length ?? 0) > 0 && (
+                <View style={{ gap: 8 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <X size={16} color={appPalette.semantic.dangerStrong} />
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 18 }}>
+                      Пропущено ({detail?.missed.length ?? 0})
+                    </Text>
+                  </View>
+                  {detail?.missed.map((m) => (
+                    <View key={m.goalId} style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: appPalette.semantic.dangerSurface, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 }}>
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: appPalette.semantic.dangerStrong }} />
+                      <Text style={{ flex: 1, fontSize: 12, color: appPalette.semantic.dangerText, fontFamily: "Montserrat", lineHeight: 16 }}>{m.goalTitle}</Text>
+                      <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat", lineHeight: 15 }}>{resolveLabel(m.category)}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </ScrollView>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 // local shape helper so ActivityBlock can be typed without importing the hook here
 type useHealthShape = {
   summary: HealthSummary;
@@ -208,6 +314,28 @@ export function ProgressOverviewSection({
   categories: CategoryOption[];
 }) {
   const resolveLabel = (value: string) => categories.find((c) => c.value === value)?.label ?? value;
+  const { getProgressDay } = useAppStore();
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [dayDetail, setDayDetail] = useState<ProgressDayDetail>();
+  const [dayLoading, setDayLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    let active = true;
+    setDayLoading(true);
+    setDayDetail(undefined);
+    getProgressDay(selectedDate)
+      .then((detail) => {
+        if (active) setDayDetail(detail);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setDayLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [selectedDate, getProgressDay]);
 
   if (loading && !overview) {
     return (
@@ -229,13 +357,22 @@ export function ProgressOverviewSection({
 
       <SurfaceCard gap={12} padding={16} radius={16}>
         <Text style={{ color: appPalette.semantic.textStrong, fontSize: 15, fontWeight: "700", fontFamily: "Montserrat", lineHeight: 20 }}>Стабильность</Text>
-        <ConsistencyCalendar days={overview.days} />
+        <Text style={{ color: appPalette.semantic.textSubtle, fontSize: 11, fontFamily: "Montserrat", lineHeight: 15 }}>Нажми на день, чтобы посмотреть детали</Text>
+        <ConsistencyCalendar days={overview.days} selectedDate={selectedDate ?? undefined} onSelectDay={setSelectedDate} />
         <Legend />
       </SurfaceCard>
 
       <ActivityBlock health={health} onConnect={onConnectHealth} />
 
       <AreaSummaries categories={overview.categories} resolveLabel={resolveLabel} />
+
+      <DayDetailSheet
+        date={selectedDate}
+        detail={dayDetail}
+        loading={dayLoading}
+        resolveLabel={resolveLabel}
+        onClose={() => setSelectedDate(null)}
+      />
     </View>
   );
 }

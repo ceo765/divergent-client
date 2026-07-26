@@ -12,6 +12,7 @@ type GoalsSlice = Pick<
   | "getActivity"
   | "getGoalXp"
   | "getProgressOverview"
+  | "getProgressDay"
   | "toggleTask"
   | "addReport"
   | "showNativeToast"
@@ -165,6 +166,15 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
   getProgressOverview: async () => {
     try {
       return await api.getProgressOverview();
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
+
+  getProgressDay: async (date) => {
+    try {
+      return await api.getProgressDay(date);
     } catch (err) {
       console.error(err);
       throw err;

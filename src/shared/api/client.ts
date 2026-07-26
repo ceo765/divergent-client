@@ -21,6 +21,7 @@ import type {
   Reward,
   User,
   ProgressOverview,
+  ProgressDayDetail,
   PersonalChallengeGoalInput,
   MissionKey,
   MissionState,
@@ -484,6 +485,12 @@ export async function getProgressOverview() {
   return (await fetchJSON(`/api/progress/overview`, {
     method: "GET",
   })) as ProgressOverview;
+}
+
+export async function getProgressDay(date: string) {
+  return (await fetchJSON(`/api/progress/day/${date}`, {
+    method: "GET",
+  })) as ProgressDayDetail;
 }
 
 export async function kickParticipant(challengeId: string, userId: string) {

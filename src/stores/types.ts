@@ -12,6 +12,7 @@ import type {
   Goal,
   GoalActivity,
   ProgressOverview,
+  ProgressDayDetail,
   Leader,
   PaymentMethod,
   OnboardingStepKey,
@@ -94,6 +95,7 @@ export interface AppStoreActions {
   getActivity: (goalId: string) => Promise<GoalActivity>;
   getGoalXp: (goalId: string) => Promise<number>;
   getProgressOverview: () => Promise<ProgressOverview>;
+  getProgressDay: (date: string) => Promise<ProgressDayDetail>;
   toggleTask: (taskId: string, setLog?: { weight?: number | null; reps?: number | null }) => Promise<void>;
   addReport: (taskId: string, data: ReportUploadPayload) => Promise<void>;
   getReports: (challengeId: string) => Promise<Report[]>;

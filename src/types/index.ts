@@ -343,6 +343,24 @@ export type ProgressOverview = {
   categories: { category: string; completed: number; goals: number }[];
 };
 
+export type ProgressDayCompletion = {
+  completionId: string;
+  taskId: string;
+  taskTitle: string;
+  goalId: string;
+  goalTitle: string;
+  category: string;
+  weight: number | null;
+  reps: number | null;
+  time: string;
+};
+
+export type ProgressDayDetail = {
+  date: string;
+  completed: ProgressDayCompletion[];
+  missed: { goalId: string; goalTitle: string; category: string }[];
+};
+
 export type Draft = {
   goal: {
     title: string;
