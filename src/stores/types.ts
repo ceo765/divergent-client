@@ -39,6 +39,7 @@ export interface AppStoreState {
   user: User | null;
   token: string | null;
   goals: Goal[];
+  archivedGoals: Goal[];
   challenges: Challenge[];
   rewards: Reward[];
   reminders: Reminder[];
@@ -89,6 +90,9 @@ export interface AppStoreActions {
   addCategory: (category: CategoryOption) => void;
   addGoal: (goal: Goal) => Promise<void>;
   deleteGoal: (goal: Goal) => Promise<void>;
+  loadArchivedGoals: () => Promise<void>;
+  archiveGoal: (id: string) => Promise<void>;
+  unarchiveGoal: (id: string) => Promise<void>;
   updateGoal: (goal: Goal) => Promise<void>;
   updateGoalProgress: (goalId: string, delta: number) => Promise<void>;
   completeOnboardingStep: (step: OnboardingStepKey) => Promise<void>;

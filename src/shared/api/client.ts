@@ -300,6 +300,18 @@ export async function fetchGoals(): Promise<Goal[]> {
   return fetchJSON("/api/goals");
 }
 
+export async function fetchArchivedGoals(): Promise<Goal[]> {
+  return fetchJSON("/api/goals/archived");
+}
+
+export async function archiveGoal(id: string) {
+  return fetchJSON(`/api/goals/${id}/archive`, { method: "POST" });
+}
+
+export async function unarchiveGoal(id: string) {
+  return fetchJSON(`/api/goals/${id}/unarchive`, { method: "POST" });
+}
+
 export async function createGoal(goal: Goal) {
   return fetchJSON("/api/goals", {
     method: "POST",

@@ -31,6 +31,8 @@ export function GoalsScreenDialogs({
   onSaveReport,
   onSaveGoal,
   onDeleteGoal,
+  onArchiveGoal,
+  onUnarchiveGoal,
   onDraftAdded,
 }: {
   createReportDialogOpen: boolean;
@@ -47,6 +49,8 @@ export function GoalsScreenDialogs({
   onSaveReport: (data: ReportUploadPayload) => Promise<boolean>;
   onSaveGoal: (data: GoalFormData) => Promise<unknown>;
   onDeleteGoal: (id: string) => Promise<boolean>;
+  onArchiveGoal?: (id: string) => Promise<void>;
+  onUnarchiveGoal?: (id: string) => Promise<void>;
   onDraftAdded: (goal: Goal) => void;
 }) {
   return (
@@ -67,6 +71,8 @@ export function GoalsScreenDialogs({
           onOpenChange={onGoalDialogOpenChange}
           onSave={onSaveGoal}
           onDelete={onDeleteGoal}
+          onArchive={onArchiveGoal}
+          onUnarchive={onUnarchiveGoal}
           onAddCategory={onAddCategory}
         />
       )}

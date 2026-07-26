@@ -54,6 +54,7 @@ export interface Goal {
   goalPeriod: GoalPeriod;
   challengeId?: string;
   challenge?: Challenge;
+  archivedAt?: string | null;
 }
 
 export interface Leader {

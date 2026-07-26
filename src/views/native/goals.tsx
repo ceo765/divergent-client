@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { GoalsScreenDialogs } from "@/components/native/goals-screen/Dialogs";
 import { GoalsScreenContent, GoalsScreenHeader } from "@/components/native/goals-screen/Sections";
 import { useGoalsScreenController } from "@/components/native/goals-screen/useGoalsScreenController";
 import { useOnboardingChecklist } from "@/shared/screens/onboarding/useOnboardingChecklist";
+import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
 
 export default function NativeGoalsScreen(props: {
@@ -16,6 +17,8 @@ export default function NativeGoalsScreen(props: {
 }) {
   const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [mode, setMode] = useState<"active" | "archived">("active");
+  const { archivedGoals, loadArchivedGoals, archiveGoal, unarchiveGoal } = useAppStore();
   const {
     loading,
     goals,
@@ -45,9 +48,17 @@ export default function NativeGoalsScreen(props: {
     handleDraftAdded,
   } = useGoalsScreenController(props);
   const onboarding = useOnboardingChecklist(goals, reminders);
+  const sourceGoals = mode === "active" ? goals : archivedGoals;
+
+  useEffect(() => {
+    if (mode === "archived") {
+      void loadArchivedGoals();
+    }
+  }, [mode, loadArchivedGoals]);
+
   const categoriesWithGoals = useMemo(
-    () => categories.filter((category) => goals.some((goal) => goal.category === category.value)),
-    [categories, goals],
+    () => categories.filter((category) => sourceGoals.some((goal) => goal.category === category.value)),
+    [categories, sourceGoals],
   );
 
   useEffect(() => {
@@ -58,16 +69,27 @@ export default function NativeGoalsScreen(props: {
 
   const filteredGoals = useMemo(() => {
     if (selectedCategory === "all") {
-      return goals;
+      return sourceGoals;
     }
 
-    return goals.filter((goal) => goal.category === selectedCategory);
-  }, [goals, selectedCategory]);
+    return sourceGoals.filter((goal) => goal.category === selectedCategory);
+  }, [sourceGoals, selectedCategory]);
 
   const selectedCategoryLabel =
     selectedCategory === "all"
       ? t("goals.all_categories")
       : categoriesWithGoals.find((category) => category.value === selectedCategory)?.label ?? selectedCategory;
+
+  const handleEdit = (id: string) => {
+    if (mode === "archived") {
+      Alert.alert("Вернуть из архива?", "Цель снова станет активной.", [
+        { text: "Отмена", style: "cancel" },
+        { text: "Вернуть", onPress: () => void unarchiveGoal(id) },
+      ]);
+      return;
+    }
+    openEditGoal(id);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: appPalette.surface.background }}>
@@ -80,19 +102,43 @@ export default function NativeGoalsScreen(props: {
         onOpenAi={() => openAi()}
       />
 
+      <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingTop: 8 }}>
+        {(["active", "archived"] as const).map((m) => {
+          const active = mode === m;
+          return (
+            <Pressable
+              key={m}
+              onPress={() => setMode(m)}
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: active ? appPalette.brand.primary : appPalette.semantic.borderSubtle,
+                backgroundColor: active ? appPalette.brand.primary : appPalette.semantic.neutralSurfaceStrong,
+              }}
+            >
+              <Text style={{ color: active ? appPalette.semantic.textInverse : appPalette.semantic.textStrong, fontSize: 12, lineHeight: 18, fontWeight: "500", fontFamily: "Montserrat" }}>
+                {m === "active" ? "Активные" : "Завершённые"}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <GoalsScreenContent
         loading={loading}
         goals={filteredGoals}
         rewards={rewards}
         categories={categoriesWithGoals}
-        hasGoals={goals.length > 0}
+        hasGoals={sourceGoals.length > 0}
         onboarding={onboarding}
         selectedCategoryLabel={selectedCategoryLabel}
         userTimeZone={userTimeZone}
         focusedGoalId={props.goalId}
         focusOnboarding={props.onboarding === "1"}
         onCreate={openCreateGoal}
-        onEdit={openEditGoal}
+        onEdit={handleEdit}
         onTaskToggle={handleTaskToggle}
         onAddReminder={openReminderForGoal}
         onAddProgress={addProgress}
@@ -115,6 +161,8 @@ export default function NativeGoalsScreen(props: {
         onSaveReport={saveReport}
         onSaveGoal={saveGoal}
         onDeleteGoal={removeGoal}
+        onArchiveGoal={archiveGoal}
+        onUnarchiveGoal={unarchiveGoal}
         onDraftAdded={(goal) => handleDraftAdded(goal.title)}
       />
     </View>

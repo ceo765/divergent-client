@@ -7,6 +7,9 @@ type GoalsSlice = Pick<
   | "addCategory"
   | "addGoal"
   | "deleteGoal"
+  | "loadArchivedGoals"
+  | "archiveGoal"
+  | "unarchiveGoal"
   | "updateGoal"
   | "updateGoalProgress"
   | "getActivity"
@@ -92,6 +95,41 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
       set({
         goals: get().goals.filter((item) => item.id !== goal.id),
       });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  loadArchivedGoals: async () => {
+    try {
+      const archived = await api.fetchArchivedGoals();
+      set({ archivedGoals: archived });
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  archiveGoal: async (id) => {
+    set({ loading: true });
+    try {
+      await api.archiveGoal(id);
+      set({ goals: get().goals.filter((item) => item.id !== id) });
+      await get().loadArchivedGoals();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  unarchiveGoal: async (id) => {
+    set({ loading: true });
+    try {
+      await api.unarchiveGoal(id);
+      set({ archivedGoals: get().archivedGoals.filter((item) => item.id !== id) });
+      await get().refreshAppData();
     } catch (err) {
       console.error(err);
     } finally {

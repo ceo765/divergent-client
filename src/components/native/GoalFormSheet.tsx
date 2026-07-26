@@ -57,6 +57,8 @@ export function GoalFormSheet({
   onOpenChange,
   onSave,
   onDelete,
+  onArchive,
+  onUnarchive,
   onAddCategory,
 }: {
   open: boolean;
@@ -66,6 +68,8 @@ export function GoalFormSheet({
   onOpenChange: (open: boolean) => void;
   onSave: (data: GoalFormData) => Promise<unknown>;
   onDelete: (id: string) => Promise<boolean>;
+  onArchive?: (id: string) => Promise<void>;
+  onUnarchive?: (id: string) => Promise<void>;
   onAddCategory: (category: CategoryOption) => void;
 }) {
   const { t } = useTranslation();
@@ -267,6 +271,12 @@ export function GoalFormSheet({
             <ActionChip onPress={handleDelete} tone="danger">
               {t("common.delete")}
             </ActionChip>
+          )}
+          {!!goal && !goal.archivedAt && onArchive && (
+            <ActionChip onPress={() => { void onArchive(goal.id); onOpenChange(false); }}>Завершить</ActionChip>
+          )}
+          {!!goal && !!goal.archivedAt && onUnarchive && (
+            <ActionChip onPress={() => { void onUnarchive(goal.id); onOpenChange(false); }}>Вернуть</ActionChip>
           )}
           <ActionChip onPress={() => onOpenChange(false)}>{t("common.cancel")}</ActionChip>
           <ActionChip onPress={() => void handleSave()} tone="primary" disabled={isSubmitting || !title.trim() || !isTaskXpTargetValid}>
