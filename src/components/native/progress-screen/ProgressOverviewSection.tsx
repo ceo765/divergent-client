@@ -11,11 +11,15 @@ import { appPalette } from "@/theme/palette";
 import type { CategoryOption, CategoryType, ProgressDayDetail, ProgressOverview } from "@/types";
 import type { HealthSummary } from "@/services/health";
 
-const CELL = 13;
+const CELL = 22;
 const CELL_GAP = 3;
-const WEEKDAY_COL = 22;
+const WEEKDAY_COL = 24;
 const LABEL_H = 14;
 const CELLS_H = 7 * CELL + 6 * CELL_GAP;
+
+function cellTextColor(status: string) {
+  return status === "empty" ? appPalette.semantic.textSubtle : "rgba(15,23,42,0.6)";
+}
 const RU_MONTHS_SHORT = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 const RU_WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
@@ -110,12 +114,18 @@ function ConsistencyCalendar({ days, selectedDate, onSelectDay }: { days: Progre
                           style={{
                             width: CELL,
                             height: CELL,
-                            borderRadius: 3,
+                            borderRadius: 4,
                             backgroundColor: cellColor(day.status),
                             borderWidth: selectedDate === day.date ? 1.5 : 0,
                             borderColor: appPalette.semantic.textStrong,
+                            alignItems: "center",
+                            justifyContent: "center",
                           }}
-                        />
+                        >
+                          <Text style={{ color: cellTextColor(day.status), fontSize: 9, fontWeight: "300", fontFamily: "Montserrat", lineHeight: 11 }}>
+                            {dayjs(day.date).date()}
+                          </Text>
+                        </Pressable>
                       ) : (
                         <View key={`${wi}-${di}`} style={{ width: CELL, height: CELL }} />
                       ),
