@@ -14,6 +14,7 @@ import type {
   ProgressOverview,
   ProgressDayDetail,
   Leader,
+  Note,
   PaymentMethod,
   OnboardingStepKey,
   Reminder,
@@ -40,6 +41,7 @@ export interface AppStoreState {
   token: string | null;
   goals: Goal[];
   archivedGoals: Goal[];
+  notes: Note[];
   challenges: Challenge[];
   rewards: Reward[];
   reminders: Reminder[];
@@ -93,6 +95,10 @@ export interface AppStoreActions {
   loadArchivedGoals: () => Promise<void>;
   archiveGoal: (id: string) => Promise<void>;
   unarchiveGoal: (id: string) => Promise<void>;
+  loadNotes: () => Promise<void>;
+  addNote: (input: { title?: string | null; body: string }) => Promise<Note | null>;
+  editNote: (id: string, input: { title?: string | null; body?: string }) => Promise<void>;
+  removeNote: (id: string) => Promise<void>;
   updateGoal: (goal: Goal) => Promise<void>;
   updateGoalProgress: (goalId: string, delta: number) => Promise<void>;
   completeOnboardingStep: (step: OnboardingStepKey) => Promise<void>;

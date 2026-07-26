@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Animated, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Animated, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import { ActionChip } from "@/components/native/ActionChip";
 import { SheetDragHandle, useSheetDragToClose } from "@/components/native/form-sheet/SheetChrome";
-import { Calendar, Clock, Crown, Gift, Award, Star, Target, Trophy, Zap } from "@/components/native/icons";
+import { Calendar, Clock, Crown, Gift, Award, Plus, ScrollText, Sparkles, Star, Target, Trophy, X, Zap } from "@/components/native/icons";
 import { categoryConfig } from "@/components/native/GoalCardParts";
 import { SurfaceCard } from "@/components/native/SurfaceCard";
 import { formatElapsed } from "@/shared/ai/formatElapsed";
@@ -13,7 +13,7 @@ import { formatReminderDayLabel } from "@/shared/display/reminders";
 import type { RewardIconType } from "@/shared/domain";
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
-import type { ChatMessage, Draft, Goal, Task } from "@/types";
+import type { ChatMessage, Draft, Goal, Note, Task } from "@/types";
 
 const rewardIconMap: Record<RewardIconType, React.ComponentType<{ size?: string | number; color?: string }>> = {
   trophy: Trophy,
@@ -28,8 +28,13 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }:
   const { t } = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
   const { headerPanHandlers, sheetStyle } = useSheetDragToClose(open, () => onOpenChange(false));
-  const { categories } = useAppStore();
+  const { categories, notes, loadNotes, addNote, removeNote, addReward } = useAppStore();
   const [category, setCategory] = useState<string | null>(null);
+  const [view, setView] = useState<"chat" | "notes">("chat");
+
+  useEffect(() => {
+    if (open) void loadNotes();
+  }, [open, loadNotes]);
   const {
     prompt,
     setPrompt,
@@ -67,6 +72,22 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }:
     void handleGenerate();
   };
 
+  const discussNote = (body: string) => {
+    setView("chat");
+    setPrompt(body);
+  };
+
+  const noteToReward = async (note: { title?: string | null; body: string }) => {
+    await addReward({
+      id: `${Date.now()}`,
+      title: (note.title || note.body).slice(0, 60),
+      description: note.body,
+      icon: "trophy",
+      isUnlocked: false,
+    });
+    Alert.alert("Готово", "Заметка добавлена в награды.");
+  };
+
   const quickActions = [
     { label: t("ai.quick_action_capabilities"), prompt: t("ai.quick_prompt_capabilities") },
     { label: t("ai.quick_action_goal"), prompt: t("ai.quick_prompt_goal") },
@@ -84,8 +105,20 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }:
           <Animated.View style={{ maxHeight: "92%", backgroundColor: appPalette.surface.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14, ...sheetStyle }}>
             <View {...headerPanHandlers} style={{ gap: 8 }}>
               <SheetDragHandle />
-              <SelectableText style={{ fontSize: 20, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{category ? `Коуч: ${categories.find((c) => c.value === category)?.label ?? category}` : t("ai.title")}</SelectableText>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <SelectableText style={{ flex: 1, fontSize: 20, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{view === "notes" ? "Заметки" : category ? `Коуч: ${categories.find((c) => c.value === category)?.label ?? category}` : t("ai.title")}</SelectableText>
+                <Pressable onPress={() => setView("chat")} hitSlop={8} style={{ padding: 4 }}>
+                  <Sparkles size={22} color={view === "chat" ? appPalette.brand.primary : appPalette.semantic.textSubtle} />
+                </Pressable>
+                <Pressable onPress={() => setView("notes")} hitSlop={8} style={{ padding: 4 }}>
+                  <ScrollText size={22} color={view === "notes" ? appPalette.brand.primary : appPalette.semantic.textSubtle} />
+                </Pressable>
+              </View>
             </View>
+            {view === "notes" ? (
+              <NotesPanel notes={notes} onAdd={(body) => void addNote({ body })} onRemove={(id) => void removeNote(id)} onDiscuss={discussNote} onToReward={noteToReward} />
+            ) : (
+            <>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, paddingVertical: 2 }}>
               {[{ value: null as string | null, label: "Общий" }, ...categories.map((c) => ({ value: c.value as string | null, label: c.label }))].map((opt) => {
                 const active = category === opt.value;
@@ -162,16 +195,82 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }:
                 </View>
               )}
             </View>
+            </>
+            )}
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
               <ActionChip onPress={() => onOpenChange(false)}>{t("common.close")}</ActionChip>
-              <ActionChip onPress={handleSubmit} tone="primary" disabled={loading || !prompt.trim()}>
-                {submitting ? t("ai.asking") : t("ai.ask")}
-              </ActionChip>
+              {view === "chat" && (
+                <ActionChip onPress={handleSubmit} tone="primary" disabled={loading || !prompt.trim()}>
+                  {submitting ? t("ai.asking") : t("ai.ask")}
+                </ActionChip>
+              )}
             </View>
           </Animated.View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
+  );
+}
+
+function NotesPanel({ notes, onAdd, onRemove, onDiscuss, onToReward }: {
+  notes: Note[];
+  onAdd: (body: string) => void;
+  onRemove: (id: string) => void;
+  onDiscuss: (body: string) => void;
+  onToReward: (note: { title?: string | null; body: string }) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const add = () => {
+    const b = draft.trim();
+    if (!b) return;
+    onAdd(b);
+    setDraft("");
+  };
+
+  return (
+    <View style={{ gap: 10, maxHeight: "78%" }}>
+      <View style={{ gap: 8 }}>
+        <TextInput
+          value={draft}
+          onChangeText={setDraft}
+          placeholder="Новая заметка…"
+          multiline
+          textAlignVertical="top"
+          placeholderTextColor={appPalette.semantic.textSubtle}
+          style={{ minHeight: 56, borderWidth: 1, borderColor: appPalette.semantic.borderStrong, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: appPalette.surface.background, color: appPalette.semantic.textStrong, fontFamily: "Montserrat", fontSize: 12, lineHeight: 18 }}
+        />
+        <Pressable onPress={add} disabled={!draft.trim()} style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 12, backgroundColor: draft.trim() ? appPalette.brand.primary : appPalette.semantic.neutralSurfaceStrong, paddingHorizontal: 14, paddingVertical: 9 }}>
+          <Plus size={16} color={draft.trim() ? appPalette.semantic.textInverse : appPalette.semantic.textSubtle} />
+          <Text style={{ color: draft.trim() ? appPalette.semantic.textInverse : appPalette.semantic.textSubtle, fontSize: 12, fontWeight: "600", fontFamily: "Montserrat", lineHeight: 16 }}>Добавить</Text>
+        </Pressable>
+      </View>
+      <ScrollView contentContainerStyle={{ gap: 8, paddingBottom: 8 }} keyboardShouldPersistTaps="handled">
+        {notes.length === 0 ? (
+          <Text style={{ color: appPalette.semantic.textSubtle, fontSize: 12, fontFamily: "Montserrat", lineHeight: 18, paddingVertical: 12 }}>Пока нет заметок. Быстро скинь сюда мысль - потом обсудишь с коучем или превратишь в награду.</Text>
+        ) : (
+          notes.map((note) => (
+            <SurfaceCard key={note.id} gap={10} padding={12} radius={14}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
+                <Text style={{ flex: 1, color: appPalette.semantic.textStrong, fontSize: 13, fontFamily: "Montserrat", lineHeight: 18 }}>{note.body}</Text>
+                <Pressable onPress={() => onRemove(note.id)} hitSlop={8}>
+                  <X size={16} color={appPalette.semantic.textSubtle} />
+                </Pressable>
+              </View>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                <Pressable onPress={() => onDiscuss(note.body)} style={{ flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 10, borderWidth: 1, borderColor: appPalette.brand.primary, paddingHorizontal: 10, paddingVertical: 6 }}>
+                  <Sparkles size={13} color={appPalette.brand.primary} />
+                  <Text style={{ color: appPalette.brand.primary, fontSize: 11, fontWeight: "600", fontFamily: "Montserrat", lineHeight: 15 }}>Обсудить с коучем</Text>
+                </Pressable>
+                <Pressable onPress={() => onToReward(note)} style={{ flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 10, borderWidth: 1, borderColor: appPalette.semantic.borderSubtle, paddingHorizontal: 10, paddingVertical: 6 }}>
+                  <Trophy size={13} color={appPalette.semantic.textMuted} />
+                  <Text style={{ color: appPalette.semantic.textMuted, fontSize: 11, fontWeight: "600", fontFamily: "Montserrat", lineHeight: 15 }}>В награду</Text>
+                </Pressable>
+              </View>
+            </SurfaceCard>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
 

@@ -63,6 +63,14 @@ export interface Leader {
   userId: string;
 }
 
+export interface Note {
+  id: string;
+  title?: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ChallengeGoal {
   challengeId: string;
   goalId: string;

@@ -15,6 +15,7 @@ import type {
   FriendInput,
   FriendSummary,
   Goal,
+  Note,
   OnboardingStepKey,
   Reminder,
   ReportUploadPayload,
@@ -302,6 +303,22 @@ export async function fetchGoals(): Promise<Goal[]> {
 
 export async function fetchArchivedGoals(): Promise<Goal[]> {
   return fetchJSON("/api/goals/archived");
+}
+
+export async function fetchNotes(): Promise<Note[]> {
+  return fetchJSON("/api/notes");
+}
+
+export async function createNote(input: { title?: string | null; body: string }): Promise<Note> {
+  return fetchJSON("/api/notes", { method: "POST", body: JSON.stringify(input) });
+}
+
+export async function updateNote(id: string, input: { title?: string | null; body?: string }): Promise<Note> {
+  return fetchJSON(`/api/notes/${id}`, { method: "PUT", body: JSON.stringify(input) });
+}
+
+export async function deleteNote(id: string) {
+  return fetchJSON(`/api/notes/${id}`, { method: "DELETE" });
 }
 
 export async function archiveGoal(id: string) {
