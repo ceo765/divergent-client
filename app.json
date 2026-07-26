@@ -7,14 +7,7 @@
     "icon": "./public/icon.jpg",
     "plugins": [
       "expo-notifications",
-      "expo-localization",
-      [
-        "react-native-health",
-        {
-          "healthSharePermission": "Divergent показывает твою активность - шаги, дистанцию и тренировки - на экране «Прогресс».",
-          "healthUpdatePermission": "Divergent может записывать тренировки в приложение «Здоровье»."
-        }
-      ]
+      "expo-localization"
     ],
     "android": {
       "package": "com.spritemedia.divergent"
@@ -22,13 +15,16 @@
     "ios": {
       "bundleIdentifier": "com.spritemedia.divergent",
       "entitlements": {
-        "aps-environment": "production"
+        "aps-environment": "production",
+        "com.apple.developer.healthkit": true
       },
       "infoPlist": {
         "LSApplicationQueriesSchemes": [
           "tg"
         ],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSHealthShareUsageDescription": "Divergent показывает твою активность - шаги, дистанцию и тренировки - на экране «Прогресс».",
+        "NSHealthUpdateUsageDescription": "Divergent может записывать тренировки в приложение «Здоровье»."
       }
     },
     "extra": {
