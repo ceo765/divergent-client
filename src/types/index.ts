@@ -325,6 +325,24 @@ export type GoalActivity = {
   data: GridItem[];
 };
 
+export type ProgressDay = {
+  date: string;
+  completed: number;
+  xp: number;
+  status: "empty" | "missed" | "partial" | "full";
+};
+
+export type ProgressOverview = {
+  range: number;
+  days: ProgressDay[];
+  currentStreak: number;
+  longestStreak: number;
+  completedToday: number;
+  activeGoals: number;
+  recurringGoals: number;
+  categories: { category: string; completed: number; goals: number }[];
+};
+
 export type Draft = {
   goal: {
     title: string;

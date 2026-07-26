@@ -16,6 +16,7 @@
   Dumbbell,
   Edit,
   Flame,
+  Footprints,
   Gift,
   GraduationCap,
   Heart,

@@ -91,7 +91,7 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }:
                 const active = category === opt.value;
                 return (
                   <Pressable key={opt.value ?? "__general"} onPress={() => setCategory(opt.value)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: active ? appPalette.brand.primary : appPalette.semantic.borderSubtle, backgroundColor: active ? appPalette.brand.primary : appPalette.semantic.neutralSurfaceStrong }}>
-                    <Text numberOfLines={1} style={{ color: active ? appPalette.semantic.textInverse : appPalette.semantic.textStrong, fontSize: 12, fontWeight: "500", fontFamily: "Montserrat" }}>{opt.label}</Text>
+                    <Text numberOfLines={1} style={{ color: active ? appPalette.semantic.textInverse : appPalette.semantic.textStrong, fontSize: 12, lineHeight: 18, fontWeight: "500", fontFamily: "Montserrat", includeFontPadding: false }}>{opt.label}</Text>
                   </Pressable>
                 );
               })}

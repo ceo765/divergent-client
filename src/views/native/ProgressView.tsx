@@ -3,20 +3,23 @@ import { ScrollView, Text, View } from "react-native";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 import { useTranslation } from "react-i18next";
 
-import { Target, Trophy, Zap } from "@/components/native/icons";
+import { Zap } from "@/components/native/icons";
 import { NativePeriodCalendar } from "@/components/native/NativePeriodCalendar";
 import { NativeScreenErrorBoundary } from "@/components/native/NativeScreenErrorBoundary";
 import { SurfaceCard } from "@/components/native/SurfaceCard";
 import {
-  ProgressCategoriesSection,
   ProgressGoalPickerModal,
   ProgressHeader,
   ProgressStreakSection,
   ProgressWeeklyXpSection,
 } from "@/components/native/progress-screen/ProgressSections";
 import { ProgressStatCard } from "@/components/native/progress-screen/ProgressPrimitives";
+import { ProgressOverviewSection } from "@/components/native/progress-screen/ProgressOverviewSection";
 import { useProgressScreen } from "@/shared/screens/progress/useProgressScreen";
+import { useProgressOverview } from "@/shared/screens/progress/useProgressOverview";
+import { useHealth } from "@/shared/health/useHealth";
 import { getStreakWindowTranslationKey } from "@/shared/display/streak";
+import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
 
 type SectionBoundaryProps = {
@@ -97,20 +100,21 @@ function NativeProgressScreenContent(props: { goalId?: string | null; onConsumeL
   const [pickerOpen, setPickerOpen] = useState(false);
   const {
     goals,
-    rewards,
     selectedGoal,
-    filteredGoals,
     xp,
     activity,
     loadingActivity,
     xpError,
     activityError,
-    completedGoals,
-    categoryData,
     weeklyXpData,
     activityView,
     retryGoalMetrics,
   } = useProgressScreen(goalId);
+
+  const showOverview = !selectedGoal;
+  const categories = useAppStore((state) => state.categories);
+  const { overview, loading: overviewLoading } = useProgressOverview(showOverview);
+  const health = useHealth(showOverview);
 
   useEffect(() => {
     if (props.goalId === undefined) return;
@@ -118,7 +122,6 @@ function NativeProgressScreenContent(props: { goalId?: string | null; onConsumeL
     props.onConsumeLinkState?.();
   }, [props.goalId, props.onConsumeLinkState]);
 
-  const unlockedRewards = rewards.filter((reward) => reward.isUnlocked).length;
   const streakMeta = useMemo(
     () =>
       !activity
@@ -164,9 +167,19 @@ function NativeProgressScreenContent(props: { goalId?: string | null; onConsumeL
       <ScrollView contentContainerStyle={{ paddingHorizontal: 8, gap: 8 }}>
         <View style={{ gap: 8 }}>
           {selectedGoal && <ProgressStatCard title={t("progress.goal_xp")} value={xp} description={t("progress.goal_xp_description")} icon={<Zap size={20} color={appPalette.semantic.textMuted} />} />}
-          {!selectedGoal && <ProgressStatCard title={t("progress.completed_goals")} value={completedGoals} description={t("progress.completed_goals_description", { count: filteredGoals.length })} icon={<Target size={20} color={appPalette.semantic.textMuted} />} />}
-          {!selectedGoal && <ProgressStatCard title={t("progress.rewards_received")} value={unlockedRewards} description={t("progress.rewards_received_description", { count: rewards.length })} icon={<Trophy size={20} color={appPalette.semantic.textMuted} />} />}
         </View>
+
+        {showOverview && (
+          <ProgressSectionBoundary section="ProgressOverviewSection" diagnostics={{ ...baseDiagnostics, hasOverview: Boolean(overview) }}>
+            <ProgressOverviewSection
+              overview={overview}
+              loading={overviewLoading}
+              health={health}
+              onConnectHealth={() => void health.connect()}
+              categories={categories}
+            />
+          </ProgressSectionBoundary>
+        )}
 
         {selectedGoal && selectedGoal.goalType === "TASK" && (loadingActivity || activity) && (
           <ProgressSectionBoundary
@@ -218,7 +231,6 @@ function NativeProgressScreenContent(props: { goalId?: string | null; onConsumeL
           </ProgressSectionBoundary>
         )}
 
-        {!selectedGoal && <ProgressCategoriesSection categoryData={categoryData} />}
       </ScrollView>
 
       <ProgressGoalPickerModal

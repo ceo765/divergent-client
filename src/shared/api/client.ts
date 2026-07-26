@@ -20,6 +20,7 @@ import type {
   ReportUploadPayload,
   Reward,
   User,
+  ProgressOverview,
   PersonalChallengeGoalInput,
   MissionKey,
   MissionState,
@@ -477,6 +478,12 @@ export async function getGoalXp(goalId: string) {
   return await fetchJSON(`/api/goals/${goalId}/xp`, {
     method: "GET",
   });
+}
+
+export async function getProgressOverview() {
+  return (await fetchJSON(`/api/progress/overview`, {
+    method: "GET",
+  })) as ProgressOverview;
 }
 
 export async function kickParticipant(challengeId: string, userId: string) {

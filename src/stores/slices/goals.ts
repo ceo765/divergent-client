@@ -11,6 +11,7 @@ type GoalsSlice = Pick<
   | "updateGoalProgress"
   | "getActivity"
   | "getGoalXp"
+  | "getProgressOverview"
   | "toggleTask"
   | "addReport"
   | "showNativeToast"
@@ -158,6 +159,15 @@ export const createGoalsSlice: StoreSlice<GoalsSlice> = (set, get) => ({
       throw err;
     } finally {
       set({ loading: false });
+    }
+  },
+
+  getProgressOverview: async () => {
+    try {
+      return await api.getProgressOverview();
+    } catch (err) {
+      console.error(err);
+      throw err;
     }
   },
 
