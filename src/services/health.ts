@@ -1,4 +1,4 @@
-import { emptyHealthSummary, type HealthService, type HealthSummary } from "./types";
+import { emptyHealthSummary, type HealthService, type HealthSummary } from "./healthTypes";
 
 // Web / default fallback: no health data source.
 const service: HealthService = {
@@ -14,4 +14,4 @@ const service: HealthService = {
 };
 
 export default service;
-export * from "./types";
+export * from "./healthTypes";

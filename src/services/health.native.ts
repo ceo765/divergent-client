@@ -5,7 +5,7 @@ import AppleHealthKit, {
   type HealthValue,
 } from "react-native-health";
 
-import { emptyHealthSummary, type HealthDaySteps, type HealthService, type HealthSummary, type HealthWorkout } from "./types";
+import { emptyHealthSummary, type HealthDaySteps, type HealthService, type HealthSummary, type HealthWorkout } from "./healthTypes";
 
 const permissions: HealthKitPermissions = {
   permissions: {
@@ -145,4 +145,4 @@ const service: HealthService = {
 };
 
 export default service;
-export * from "./types";
+export * from "./healthTypes";
