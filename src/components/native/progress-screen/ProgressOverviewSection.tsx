@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, Text, View } from "react-native";
 import dayjs from "dayjs";
 
@@ -6,6 +6,7 @@ import { HapticPressable as Pressable } from "@/components/native/HapticPressabl
 import { SurfaceCard } from "@/components/native/SurfaceCard";
 import { categoryConfig } from "@/components/native/GoalCardParts";
 import { Activity, CircleCheck, Flame, Footprints, Target, X } from "@/components/native/icons";
+import { healthCompleteGoal } from "@/shared/api/client";
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
 import type { CategoryOption, CategoryType, ProgressDayDetail, ProgressOverview } from "@/types";
@@ -474,7 +475,43 @@ export function ProgressOverviewSection({
   categories: CategoryOption[];
 }) {
   const resolveLabel = (value: string) => categories.find((c) => c.value === value)?.label ?? value;
-  const { getProgressDay } = useAppStore();
+  const { getProgressDay, goals, refreshAppData } = useAppStore();
+  const syncedRef = useRef(false);
+
+  // Автозачёт: тренировки из Здоровья закрывают задачи связанных целей.
+  useEffect(() => {
+    if (syncedRef.current) return;
+    if (!health.authorized) return;
+    const workouts = health.summary.workouts;
+    const linked = goals.filter((g) => g.healthActivity);
+    if (!workouts.length || !linked.length) return;
+    syncedRef.current = true;
+
+    const now = new Date();
+    const dow = (now.getDay() + 6) % 7; // Пн = 0
+    const weekStart = new Date(now);
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(now.getDate() - dow);
+
+    void (async () => {
+      let applied = false;
+      for (const g of linked) {
+        const minKm = g.healthMinKm ?? 0;
+        const qualifying = workouts.filter(
+          (w) => w.type === g.healthActivity && (w.distanceKm ?? 0) >= minKm && new Date(w.start) >= weekStart,
+        );
+        for (const w of qualifying) {
+          try {
+            const r = await healthCompleteGoal(g.id, w.id);
+            if (r.applied) applied = true;
+          } catch {
+            // ignore
+          }
+        }
+      }
+      if (applied) await refreshAppData();
+    })();
+  }, [health.authorized, health.summary.workouts, goals, refreshAppData]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [dayDetail, setDayDetail] = useState<ProgressDayDetail>();
   const [dayLoading, setDayLoading] = useState(false);

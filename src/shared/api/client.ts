@@ -329,6 +329,13 @@ export async function unarchiveGoal(id: string) {
   return fetchJSON(`/api/goals/${id}/unarchive`, { method: "POST" });
 }
 
+export async function healthCompleteGoal(goalId: string, workoutId: string): Promise<{ applied: boolean }> {
+  return fetchJSON(`/api/goals/${goalId}/health-complete`, {
+    method: "POST",
+    body: JSON.stringify({ workoutId }),
+  });
+}
+
 export async function createGoal(goal: Goal) {
   return fetchJSON("/api/goals", {
     method: "POST",

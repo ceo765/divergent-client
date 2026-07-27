@@ -1,9 +1,10 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { Alert, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { ActionChip } from "@/components/native/ActionChip";
 import { FieldInput } from "@/components/native/FieldInput";
+import { appPalette } from "@/theme/palette";
 import { FormSheetLayout } from "@/components/native/form-sheet/Layout";
 import {
   CategorySection,
@@ -78,6 +79,8 @@ export function GoalFormSheet({
   const [category, setCategory] = useState(categories[0]?.value ?? "personal");
   const [goalType, setGoalType] = useState<GoalType>("TASK");
   const [isWorkout, setIsWorkout] = useState(false);
+  const [healthActivity, setHealthActivity] = useState<string | null>(null);
+  const [healthMinKm, setHealthMinKm] = useState("");
   const [goalPeriod, setGoalPeriod] = useState<GoalPeriod>("NONE");
   const [dueDate, setDueDate] = useState("");
   const [currentValue, setCurrentValue] = useState("");
@@ -111,6 +114,8 @@ export function GoalFormSheet({
       setCategory(goal.category);
       setGoalType(goal.goalType);
       setIsWorkout(Boolean(goal.isWorkout));
+      setHealthActivity(goal.healthActivity ?? null);
+      setHealthMinKm(goal.healthMinKm != null ? String(goal.healthMinKm) : "");
       setGoalPeriod(goal.goalPeriod);
       setDueDate(goal.dueDate ?? "");
       setCurrentValue(goal.currentValue?.toString() ?? "");
@@ -131,6 +136,8 @@ export function GoalFormSheet({
     setCategory(categories[0]?.value ?? "personal");
     setGoalType("TASK");
     setIsWorkout(false);
+    setHealthActivity(null);
+    setHealthMinKm("");
     setGoalPeriod("NONE");
     setDueDate("");
     setCurrentValue("");
@@ -227,6 +234,8 @@ export function GoalFormSheet({
         targetValue: goalType === "PROGRESS" && targetValue.trim() !== "" ? Number(targetValue) : undefined,
         goalType,
         isWorkout: goalType === "TASK" ? isWorkout : false,
+        healthActivity: goalType === "TASK" ? healthActivity : null,
+        healthMinKm: goalType === "TASK" && healthActivity && healthMinKm.trim() !== "" ? Number(healthMinKm) : null,
         goalPeriod,
         rewardId: activeRewardId,
         challenge: goal?.challenge,
@@ -297,6 +306,30 @@ export function GoalFormSheet({
       />
       <GoalTypeSection goalType={goalType} onChange={setGoalType} />
       {goalType === "TASK" && <WorkoutToggleSection value={isWorkout} onChange={setIsWorkout} />}
+      {goalType === "TASK" && (
+        <View style={{ gap: 8 }}>
+          <Text style={{ color: appPalette.semantic.text, fontSize: 14, fontWeight: "600", fontFamily: "Montserrat" }}>Автозачёт из Здоровья</Text>
+          <Text style={{ color: appPalette.semantic.textSubtle, fontSize: 11, fontFamily: "Montserrat", lineHeight: 15 }}>Тренировка нужного типа из «Здоровья» сама закроет задачу цели.</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {["Выкл", "Бег", "Плавание", "Ходьба", "Велосипед"].map((opt) => {
+              const value = opt === "Выкл" ? null : opt;
+              const active = healthActivity === value;
+              return (
+                <Pressable
+                  key={opt}
+                  onPress={() => setHealthActivity(value)}
+                  style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: active ? appPalette.brand.primary : appPalette.semantic.borderSubtle, backgroundColor: active ? appPalette.brand.primary : appPalette.semantic.neutralSurfaceStrong }}
+                >
+                  <Text style={{ color: active ? appPalette.semantic.textInverse : appPalette.semantic.textStrong, fontSize: 12, lineHeight: 16, fontFamily: "Montserrat" }}>{opt}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {!!healthActivity && (
+            <FieldInput label="Мин. дистанция, км (необязательно)" value={healthMinKm} onChangeText={setHealthMinKm} placeholder="напр. 5" keyboardType="numeric" />
+          )}
+        </View>
+      )}
       <GoalPeriodSection goalPeriod={goalPeriod} onChange={setGoalPeriod} />
       <DueDateSection dueDate={dueDate} onChange={setDueDate} />
       <CategorySection categories={categories} category={category} onChange={setCategory} onAddCategory={onAddCategory} />

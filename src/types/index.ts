@@ -55,6 +55,8 @@ export interface Goal {
   challengeId?: string;
   challenge?: Challenge;
   archivedAt?: string | null;
+  healthActivity?: string | null;
+  healthMinKm?: number | null;
 }
 
 export interface Leader {
