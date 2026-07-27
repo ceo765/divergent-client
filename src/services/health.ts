@@ -1,4 +1,4 @@
-import { emptyHealthSummary, type HealthService, type HealthSummary } from "./healthTypes";
+import { emptyHealthStats, emptyHealthSummary, type HealthService, type HealthStats, type HealthSummary } from "./healthTypes";
 
 // Web / default fallback: no health data source.
 const service: HealthService = {
@@ -10,6 +10,9 @@ const service: HealthService = {
   },
   async getSummary(): Promise<HealthSummary> {
     return emptyHealthSummary;
+  },
+  async getStats(): Promise<HealthStats> {
+    return emptyHealthStats;
   },
 };
 

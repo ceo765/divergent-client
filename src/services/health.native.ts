@@ -1,12 +1,13 @@
 import { Platform } from "react-native";
 import {
   isHealthDataAvailable,
+  queryStatisticsCollectionForQuantity,
   queryStatisticsForQuantity,
   queryWorkoutSamples,
   requestAuthorization,
 } from "@kingstinct/react-native-healthkit";
 
-import { emptyHealthSummary, type HealthDaySteps, type HealthService, type HealthSummary, type HealthWorkout } from "./healthTypes";
+import { emptyHealthSummary, type HealthDaySteps, type HealthService, type HealthStatDay, type HealthStats, type HealthSummary, type HealthWorkout } from "./healthTypes";
 
 const STEP = "HKQuantityTypeIdentifierStepCount";
 const DISTANCE = "HKQuantityTypeIdentifierDistanceWalkingRunning";
@@ -108,6 +109,27 @@ async function recentWorkouts(): Promise<HealthWorkout[]> {
   }
 }
 
+async function dailyCollection(identifier: string, unit: string, from: Date, to: Date): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  try {
+    const buckets = (await queryStatisticsCollectionForQuantity(
+      identifier as never,
+      ["cumulativeSum"],
+      from,
+      { day: 1 } as never,
+      { filter: { date: { startDate: from, endDate: to } }, unit: unit as never },
+    )) as unknown as Array<{ startDate?: string | Date; sumQuantity?: { quantity?: number } }>;
+    for (const b of buckets ?? []) {
+      if (!b.startDate) continue;
+      const key = new Date(b.startDate).toISOString().slice(0, 10);
+      map.set(key, (map.get(key) ?? 0) + (b.sumQuantity?.quantity ?? 0));
+    }
+  } catch {
+    // ignore
+  }
+  return map;
+}
+
 const service: HealthService = {
   async isAvailable() {
     if (Platform.OS !== "ios") return false;
@@ -149,6 +171,55 @@ const service: HealthService = {
       weekSteps: week,
       workouts,
     };
+  },
+
+  async getStats(): Promise<HealthStats> {
+    if (Platform.OS !== "ios" || !authorized) {
+      return { available: Platform.OS === "ios", days: [], runs: 0 };
+    }
+    const now = new Date();
+    const from = startOfToday();
+    from.setDate(from.getDate() - 29); // 30 дней включительно
+
+    const runByDay = new Map<string, number>();
+    let runs = 0;
+    try {
+      const raw = (await queryWorkoutSamples({ limit: 300 } as never)) as unknown as Array<{
+        startDate?: string | Date;
+        workoutActivityType?: unknown;
+        totalDistance?: { quantity?: number };
+      }>;
+      for (const w of raw ?? []) {
+        if (workoutLabel(w.workoutActivityType) !== "Бег") continue;
+        const start = w.startDate ? new Date(w.startDate) : null;
+        if (!start || start < from) continue;
+        runs += 1;
+        const key = start.toISOString().slice(0, 10);
+        const km = (w.totalDistance?.quantity ?? 0) / 1000;
+        runByDay.set(key, (runByDay.get(key) ?? 0) + km);
+      }
+    } catch {
+      // ignore
+    }
+
+    const [stepMap, distMap] = await Promise.all([
+      dailyCollection(STEP, "count", from, now),
+      dailyCollection(DISTANCE, "m", from, now),
+    ]);
+
+    const days: HealthStatDay[] = [];
+    const cursor = new Date(from);
+    for (let i = 0; i < 30; i++) {
+      const key = cursor.toISOString().slice(0, 10);
+      const steps = Math.round(stepMap.get(key) ?? 0);
+      const totalKm = (distMap.get(key) ?? 0) / 1000; // ходьба + бег
+      const runKm = Math.round((runByDay.get(key) ?? 0) * 10) / 10;
+      const walkKm = Math.max(0, Math.round((totalKm - runKm) * 10) / 10);
+      days.push({ date: key, steps, walkKm, runKm });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return { available: true, days, runs };
   },
 };
 

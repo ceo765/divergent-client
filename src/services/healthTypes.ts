@@ -30,8 +30,28 @@ export const emptyHealthSummary: HealthSummary = {
   workouts: [],
 };
 
+export type HealthStatDay = {
+  date: string;
+  steps: number;
+  walkKm: number;
+  runKm: number;
+};
+
+export type HealthStats = {
+  available: boolean;
+  days: HealthStatDay[]; // хронологически, до 30 дней (старые -> новые)
+  runs: number; // число пробежек за период
+};
+
+export const emptyHealthStats: HealthStats = {
+  available: false,
+  days: [],
+  runs: 0,
+};
+
 export interface HealthService {
   isAvailable(): Promise<boolean>;
   requestAuthorization(): Promise<boolean>;
   getSummary(): Promise<HealthSummary>;
+  getStats(): Promise<HealthStats>;
 }

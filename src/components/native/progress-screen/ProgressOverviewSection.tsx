@@ -9,7 +9,7 @@ import { Activity, CircleCheck, Flame, Footprints, Target, X } from "@/component
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
 import type { CategoryOption, CategoryType, ProgressDayDetail, ProgressOverview } from "@/types";
-import type { HealthSummary } from "@/services/health";
+import healthService, { type HealthStatDay, type HealthStats, type HealthSummary } from "@/services/health";
 
 const CELL = 22;
 const CELL_GAP = 3;
@@ -174,14 +174,21 @@ function StepsBars({ week }: { week: HealthSummary["weekSteps"] }) {
   );
 }
 
-function ActivityBlock({ health, onConnect }: { health: ReturnType<typeof useHealthShape>; onConnect: () => void }) {
+function ActivityBlock({ health, onConnect, onOpenStats }: { health: ReturnType<typeof useHealthShape>; onConnect: () => void; onOpenStats: () => void }) {
   const { summary, available, authorized, loading } = health;
 
   return (
     <SurfaceCard gap={12} padding={16} radius={16}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <Activity size={18} color={appPalette.brand.primary} />
-        <Text style={{ color: appPalette.semantic.textStrong, fontSize: 15, fontWeight: "700", fontFamily: "Montserrat", lineHeight: 20 }}>Активность</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <Activity size={18} color={appPalette.brand.primary} />
+          <Text style={{ color: appPalette.semantic.textStrong, fontSize: 15, fontWeight: "700", fontFamily: "Montserrat", lineHeight: 20 }}>Активность</Text>
+        </View>
+        {available && authorized && (
+          <Pressable onPress={onOpenStats} hitSlop={8}>
+            <Text style={{ color: appPalette.brand.primary, fontSize: 12, fontWeight: "600", fontFamily: "Montserrat", lineHeight: 16 }}>Подробнее</Text>
+          </Pressable>
+        )}
       </View>
 
       {!available ? (
@@ -350,6 +357,101 @@ function DayDetailSheet({
   );
 }
 
+function StatMiniBars({ values, color }: { values: number[]; color: string }) {
+  const max = Math.max(1, ...values);
+  return (
+    <View style={{ flexDirection: "row", alignItems: "flex-end", height: 50, gap: 2 }}>
+      {values.map((v, i) => (
+        <View key={i} style={{ flex: 1, height: Math.max(3, (v / max) * 44), borderRadius: 2, backgroundColor: color, opacity: v > 0 ? 1 : 0.18 }} />
+      ))}
+    </View>
+  );
+}
+
+function HealthStatsSheet({ open, stats, loading, onClose }: { open: boolean; stats?: HealthStats; loading: boolean; onClose: () => void }) {
+  const [period, setPeriod] = useState<7 | 30>(7);
+  const days = stats?.days ?? [];
+  const windowDays = days.slice(-period);
+  const avg = (sel: (d: HealthStatDay) => number) => (windowDays.length ? windowDays.reduce((s, d) => s + sel(d), 0) / windowDays.length : 0);
+  const avgRun = avg((d) => d.runKm);
+  const avgSteps = Math.round(avg((d) => d.steps));
+  const avgWalk = avg((d) => d.walkKm);
+  const runDays = windowDays.filter((d) => d.runKm > 0).length;
+  const periodLabel = period === 7 ? "неделю" : "месяц";
+
+  return (
+    <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: appPalette.surface.overlay, justifyContent: "flex-end" }}>
+        <View style={{ maxHeight: "88%", backgroundColor: appPalette.surface.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 24 }}>Статистика</Text>
+            <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+              {([7, 30] as const).map((p) => (
+                <Pressable key={p} onPress={() => setPeriod(p)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: period === p ? appPalette.brand.primary : appPalette.semantic.borderSubtle, backgroundColor: period === p ? appPalette.brand.primary : appPalette.semantic.neutralSurfaceStrong }}>
+                  <Text style={{ color: period === p ? appPalette.semantic.textInverse : appPalette.semantic.textStrong, fontSize: 12, fontWeight: "500", fontFamily: "Montserrat", lineHeight: 16 }}>{p === 7 ? "Неделя" : "Месяц"}</Text>
+                </Pressable>
+              ))}
+              <Pressable onPress={onClose} hitSlop={8} style={{ marginLeft: 2 }}>
+                <X size={22} color={appPalette.semantic.textMuted} />
+              </Pressable>
+            </View>
+          </View>
+
+          {loading ? (
+            <View style={{ paddingVertical: 30, alignItems: "center" }}>
+              <ActivityIndicator size="large" color={appPalette.brand.primary} />
+            </View>
+          ) : (
+            <ScrollView contentContainerStyle={{ gap: 12, paddingBottom: 8 }}>
+              <SurfaceCard gap={10} padding={14} radius={14}>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 20 }}>Бег</Text>
+                <View style={{ flexDirection: "row", gap: 20 }}>
+                  <View>
+                    <Text style={{ fontSize: 20, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 24 }}>{avgRun.toFixed(1)} <Text style={{ fontSize: 12, color: appPalette.semantic.textMuted }}>км/день</Text></Text>
+                    <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat", lineHeight: 15 }}>среднее за {periodLabel}</Text>
+                  </View>
+                  <View>
+                    <Text style={{ fontSize: 20, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 24 }}>{runDays}</Text>
+                    <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat", lineHeight: 15 }}>дней с бегом</Text>
+                  </View>
+                </View>
+                <StatMiniBars values={windowDays.map((d) => d.runKm)} color={appPalette.brand.primary} />
+              </SurfaceCard>
+
+              <SurfaceCard gap={10} padding={14} radius={14}>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 20 }}>Ходьба</Text>
+                <View style={{ flexDirection: "row", gap: 20 }}>
+                  <View>
+                    <Text style={{ fontSize: 20, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 24 }}>{avgSteps.toLocaleString("ru-RU")} <Text style={{ fontSize: 12, color: appPalette.semantic.textMuted }}>шаг/день</Text></Text>
+                    <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat", lineHeight: 15 }}>среднее за {periodLabel}</Text>
+                  </View>
+                  <View>
+                    <Text style={{ fontSize: 20, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 24 }}>{avgWalk.toFixed(1)} <Text style={{ fontSize: 12, color: appPalette.semantic.textMuted }}>км</Text></Text>
+                    <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat", lineHeight: 15 }}>в день</Text>
+                  </View>
+                </View>
+                <StatMiniBars values={windowDays.map((d) => d.steps)} color={appPalette.semantic.successStrong} />
+              </SurfaceCard>
+
+              <SurfaceCard gap={6} padding={14} radius={14}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 18 }}>По дням</Text>
+                {[...windowDays].reverse().map((d, i) => (
+                  <View key={d.date} style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, borderBottomWidth: i < windowDays.length - 1 ? 0.5 : 0, borderBottomColor: appPalette.semantic.borderSubtle }}>
+                    <Text style={{ fontSize: 12, color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 16 }}>{dayjs(d.date).format("D MMM, dd")}</Text>
+                    <Text style={{ fontSize: 12, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat", lineHeight: 16 }}>
+                      <Text style={{ color: appPalette.brand.primary }}>{d.runKm > 0 ? `${d.runKm} км бег` : "—"}</Text>  ·  {d.steps.toLocaleString("ru-RU")} шаг
+                    </Text>
+                  </View>
+                ))}
+              </SurfaceCard>
+            </ScrollView>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 // local shape helper so ActivityBlock can be typed without importing the hook here
 type useHealthShape = {
   summary: HealthSummary;
@@ -376,6 +478,19 @@ export function ProgressOverviewSection({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [dayDetail, setDayDetail] = useState<ProgressDayDetail>();
   const [dayLoading, setDayLoading] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [stats, setStats] = useState<HealthStats>();
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  const openStats = () => {
+    setStatsOpen(true);
+    setStatsLoading(true);
+    healthService
+      .getStats()
+      .then((s) => setStats(s))
+      .catch(() => {})
+      .finally(() => setStatsLoading(false));
+  };
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -420,7 +535,7 @@ export function ProgressOverviewSection({
         <Legend />
       </SurfaceCard>
 
-      <ActivityBlock health={health} onConnect={onConnectHealth} />
+      <ActivityBlock health={health} onConnect={onConnectHealth} onOpenStats={openStats} />
 
       <AreaSummaries categories={overview.categories} resolveLabel={resolveLabel} />
 
@@ -431,6 +546,8 @@ export function ProgressOverviewSection({
         resolveLabel={resolveLabel}
         onClose={() => setSelectedDate(null)}
       />
+
+      <HealthStatsSheet open={statsOpen} stats={stats} loading={statsLoading} onClose={() => setStatsOpen(false)} />
     </View>
   );
 }
