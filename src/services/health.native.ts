@@ -1,146 +1,154 @@
 import { Platform } from "react-native";
-import AppleHealthKit, {
-  type HealthInputOptions,
-  type HealthKitPermissions,
-  type HealthValue,
-} from "react-native-health";
+import {
+  isHealthDataAvailable,
+  queryStatisticsForQuantity,
+  queryWorkoutSamples,
+  requestAuthorization,
+} from "@kingstinct/react-native-healthkit";
 
 import { emptyHealthSummary, type HealthDaySteps, type HealthService, type HealthSummary, type HealthWorkout } from "./healthTypes";
 
-const permissions: HealthKitPermissions = {
-  permissions: {
-    read: [
-      AppleHealthKit.Constants.Permissions.Steps,
-      AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
-      AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
-      AppleHealthKit.Constants.Permissions.Workout,
-    ],
-    write: [],
-  },
+const STEP = "HKQuantityTypeIdentifierStepCount";
+const DISTANCE = "HKQuantityTypeIdentifierDistanceWalkingRunning";
+const ENERGY = "HKQuantityTypeIdentifierActiveEnergyBurned";
+const WORKOUT = "HKWorkoutTypeIdentifier";
+
+const READ = [STEP, DISTANCE, ENERGY, WORKOUT] as const;
+
+let authorized = false;
+
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+async function sumFor(identifier: string, unit: string, start: Date, end: Date): Promise<number> {
+  try {
+    const r = (await queryStatisticsForQuantity(
+      identifier as never,
+      ["cumulativeSum"],
+      { filter: { date: { startDate: start, endDate: end } }, unit: unit as never },
+    )) as { sumQuantity?: { quantity?: number } } | null;
+    return r?.sumQuantity?.quantity ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function weekSteps(): Promise<HealthDaySteps[]> {
+  const days: HealthDaySteps[] = [];
+  const base = startOfToday();
+  const tasks: Promise<HealthDaySteps>[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const dayStart = new Date(base);
+    dayStart.setDate(base.getDate() - i);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayStart.getDate() + 1);
+    const key = dayStart.toISOString().slice(0, 10);
+    tasks.push(sumFor(STEP, "count", dayStart, dayEnd).then((steps) => ({ date: key, steps: Math.round(steps) })));
+  }
+  for (const t of tasks) days.push(await t);
+  return days;
+}
+
+const ACTIVITY_LABELS: Record<string, string> = {
+  swimming: "Плавание",
+  "46": "Плавание",
+  running: "Бег",
+  "37": "Бег",
+  walking: "Ходьба",
+  "52": "Ходьба",
+  cycling: "Велосипед",
+  "13": "Велосипед",
+  traditionalStrengthTraining: "Силовая",
+  "50": "Силовая",
+  functionalStrengthTraining: "Силовая",
+  "20": "Силовая",
+  highIntensityIntervalTraining: "HIIT",
+  "63": "HIIT",
+  yoga: "Йога",
+  "57": "Йога",
 };
 
-let initialized = false;
-
-function initOnce(): Promise<boolean> {
-  if (initialized) return Promise.resolve(true);
-  return new Promise((resolve) => {
-    try {
-      AppleHealthKit.initHealthKit(permissions, (err: string) => {
-        if (err) {
-          resolve(false);
-          return;
-        }
-        initialized = true;
-        resolve(true);
-      });
-    } catch {
-      resolve(false);
-    }
-  });
+function workoutLabel(t: unknown): string {
+  if (t == null) return "Тренировка";
+  return ACTIVITY_LABELS[String(t)] ?? "Тренировка";
 }
 
-function todaySteps(): Promise<number> {
-  return new Promise((resolve) => {
-    AppleHealthKit.getStepCount({ date: new Date().toISOString() } as HealthInputOptions, (err: string, r: HealthValue) => {
-      resolve(err ? 0 : Math.round(r?.value ?? 0));
-    });
-  });
-}
-
-function todayDistanceKm(): Promise<number> {
-  return new Promise((resolve) => {
-    AppleHealthKit.getDistanceWalkingRunning({ date: new Date().toISOString(), unit: "meter" } as HealthInputOptions, (err: string, r: HealthValue) => {
-      resolve(err ? 0 : Math.round(((r?.value ?? 0) / 1000) * 10) / 10);
-    });
-  });
-}
-
-function weekSteps(): Promise<HealthDaySteps[]> {
-  const start = new Date();
-  start.setDate(start.getDate() - 6);
-  start.setHours(0, 0, 0, 0);
-  return new Promise((resolve) => {
-    AppleHealthKit.getDailyStepCountSamples(
-      { startDate: start.toISOString(), endDate: new Date().toISOString() } as HealthInputOptions,
-      (err: string, results: HealthValue[]) => {
-        if (err || !Array.isArray(results)) {
-          resolve([]);
-          return;
-        }
-        const byDay = new Map<string, number>();
-        for (const s of results) {
-          const key = new Date(s.startDate as unknown as string).toISOString().slice(0, 10);
-          byDay.set(key, (byDay.get(key) ?? 0) + (s.value ?? 0));
-        }
-        const days: HealthDaySteps[] = [];
-        const cursor = new Date(start);
-        for (let i = 0; i < 7; i++) {
-          const key = cursor.toISOString().slice(0, 10);
-          days.push({ date: key, steps: Math.round(byDay.get(key) ?? 0) });
-          cursor.setDate(cursor.getDate() + 1);
-        }
-        resolve(days);
-      },
-    );
-  });
-}
-
-function recentWorkouts(): Promise<HealthWorkout[]> {
-  const start = new Date();
-  start.setDate(start.getDate() - 30);
-  return new Promise((resolve) => {
-    AppleHealthKit.getAnchoredWorkouts(
-      { startDate: start.toISOString(), type: "Workout" } as HealthInputOptions,
-      (err: string, results: { data?: unknown[] }) => {
-        if (err || !results?.data) {
-          resolve([]);
-          return;
-        }
-        const list = (results.data as Array<{ id: string; activityName: string; start: string; duration: number; calories: number; distance: number }>)
-          .map((w) => ({
-            id: w.id,
-            type: w.activityName || "Тренировка",
-            start: w.start,
-            durationMin: Math.round((w.duration ?? 0) / 60),
-            calories: w.calories ? Math.round(w.calories) : undefined,
-            distanceKm: w.distance ? Math.round((w.distance / 1000) * 10) / 10 : undefined,
-          }))
-          .sort((a, b) => (a.start < b.start ? 1 : -1));
-        resolve(list.slice(0, 10));
-      },
-    );
-  });
+async function recentWorkouts(): Promise<HealthWorkout[]> {
+  try {
+    const monthAgo = new Date();
+    monthAgo.setDate(monthAgo.getDate() - 30);
+    const raw = (await queryWorkoutSamples({ limit: 20 } as never)) as unknown as Array<{
+      uuid?: string;
+      startDate?: string | Date;
+      workoutActivityType?: unknown;
+      duration?: { quantity?: number };
+      totalDistance?: { quantity?: number };
+      totalEnergyBurned?: { quantity?: number };
+    }>;
+    return (raw ?? [])
+      .map((w, i) => {
+        const start = w.startDate ? new Date(w.startDate) : new Date();
+        return {
+          id: w.uuid ?? `${start.toISOString()}-${i}`,
+          type: workoutLabel(w.workoutActivityType),
+          start: start.toISOString(),
+          durationMin: Math.round((w.duration?.quantity ?? 0) / 60),
+          calories: w.totalEnergyBurned?.quantity ? Math.round(w.totalEnergyBurned.quantity) : undefined,
+          distanceKm: w.totalDistance?.quantity ? Math.round((w.totalDistance.quantity / 1000) * 10) / 10 : undefined,
+        };
+      })
+      .filter((w) => new Date(w.start) >= monthAgo)
+      .sort((a, b) => (a.start < b.start ? 1 : -1))
+      .slice(0, 10);
+  } catch {
+    return [];
+  }
 }
 
 const service: HealthService = {
   async isAvailable() {
     if (Platform.OS !== "ios") return false;
-    return new Promise<boolean>((resolve) => {
-      try {
-        AppleHealthKit.isAvailable((err: object, available: boolean) => resolve(!err && !!available));
-      } catch {
-        resolve(false);
-      }
-    });
+    try {
+      return Boolean(isHealthDataAvailable());
+    } catch {
+      return false;
+    }
   },
 
   async requestAuthorization() {
     if (Platform.OS !== "ios") return false;
-    return initOnce();
+    try {
+      await requestAuthorization({ toRead: READ as never });
+      authorized = true;
+      return true;
+    } catch {
+      return false;
+    }
   },
 
   async getSummary(): Promise<HealthSummary> {
-    if (Platform.OS !== "ios" || !initialized) {
-      // Доступ ещё не выдан - показываем экран "Подключить", данные не тянем.
+    if (Platform.OS !== "ios" || !authorized) {
       return { ...emptyHealthSummary, available: Platform.OS === "ios" };
     }
-    const [steps, distanceKm, week, workouts] = await Promise.all([
-      todaySteps(),
-      todayDistanceKm(),
+    const now = new Date();
+    const todayStart = startOfToday();
+    const [steps, distanceMeters, week, workouts] = await Promise.all([
+      sumFor(STEP, "count", todayStart, now),
+      sumFor(DISTANCE, "m", todayStart, now),
       weekSteps(),
       recentWorkouts(),
     ]);
-    return { available: true, authorized: true, steps, distanceKm, weekSteps: week, workouts };
+    return {
+      available: true,
+      authorized: true,
+      steps: Math.round(steps),
+      distanceKm: Math.round((distanceMeters / 1000) * 10) / 10,
+      weekSteps: week,
+      workouts,
+    };
   },
 };
 
