@@ -7,7 +7,8 @@
     "icon": "./public/icon.jpg",
     "plugins": [
       "expo-notifications",
-      "expo-localization"
+      "expo-localization",
+      "./plugins/withHealthKitPod.cjs"
     ],
     "android": {
       "package": "com.spritemedia.divergent"
