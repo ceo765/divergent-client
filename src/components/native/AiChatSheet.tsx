@@ -103,14 +103,16 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }:
       >
         <View style={{ flex: 1, backgroundColor: appPalette.surface.overlay, justifyContent: "flex-end" }}>
           <Animated.View style={{ maxHeight: "92%", backgroundColor: appPalette.surface.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14, ...sheetStyle }}>
-            <View {...headerPanHandlers} style={{ gap: 8 }}>
-              <SheetDragHandle />
+            <View style={{ gap: 8 }}>
+              <View {...headerPanHandlers}>
+                <SheetDragHandle />
+              </View>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                 <SelectableText style={{ flex: 1, fontSize: 20, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{view === "notes" ? "Заметки" : category ? `Коуч: ${categories.find((c) => c.value === category)?.label ?? category}` : t("ai.title")}</SelectableText>
-                <Pressable onPress={() => setView("chat")} hitSlop={8} style={{ padding: 4 }}>
+                <Pressable onPress={() => setView("chat")} hitSlop={10} style={{ padding: 6 }}>
                   <Sparkles size={22} color={view === "chat" ? appPalette.brand.primary : appPalette.semantic.textSubtle} />
                 </Pressable>
-                <Pressable onPress={() => setView("notes")} hitSlop={8} style={{ padding: 4 }}>
+                <Pressable onPress={() => setView("notes")} hitSlop={10} style={{ padding: 6 }}>
                   <ScrollText size={22} color={view === "notes" ? appPalette.brand.primary : appPalette.semantic.textSubtle} />
                 </Pressable>
               </View>
