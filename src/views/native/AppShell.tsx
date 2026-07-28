@@ -119,7 +119,6 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
     { key: "challenges", label: t("navigation.challenges"), icon: Swords },
     { key: "rewards", label: t("navigation.rewards"), icon: Gift },
     { key: "progress", label: t("navigation.progress"), icon: BarChart2 },
-    { key: "reminders", label: t("navigation.reminders"), icon: Bell },
   ];
 
   const clearTransientState = useCallback(() => {
@@ -271,7 +270,7 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
                 }}
               />
             )}
-            {activeTab === "settings" && <NativeSettingsScreen />}
+            {activeTab === "settings" && <NativeSettingsScreen onOpenReminders={() => setActiveTab("reminders")} />}
             {activeTab === "missions" && <NativeMissionsScreen />}
           </Suspense>
         </View>
