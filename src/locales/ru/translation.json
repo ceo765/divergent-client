@@ -65,6 +65,7 @@
     "description": "Путь к лучшей версии себя"
   },
   "navigation": {
+    "today": "Сегодня",
     "goals": "Цели",
     "challenges": "Челленджи",
     "frens": "Друзья",

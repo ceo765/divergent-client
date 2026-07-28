@@ -1,9 +1,10 @@
-export type NativeAppTab = "goals" | "reminders" | "challenges" | "rewards" | "progress" | "missions" | "settings";
+export type NativeAppTab = "today" | "goals" | "reminders" | "challenges" | "rewards" | "progress" | "missions" | "settings";
 export type NativeAuthTab = "signin" | "signup" | "reset";
 export type NativeResetMode = "request" | "confirm";
 
 export type NativeAppRoute =
-| { kind: "app"; tab: "goals"; goalId?: string | null; reportTaskId?: string | null; onboarding?: string | null }
+| { kind: "app"; tab: "today" }
+  | { kind: "app"; tab: "goals"; goalId?: string | null; reportTaskId?: string | null; onboarding?: string | null }
   | { kind: "app"; tab: "reminders"; reminderId?: string | null; goalId?: string | null }
   | { kind: "app"; tab: "challenges"; focusId?: string | null; paymentId?: string | null }
   | { kind: "app"; tab: "rewards"; rewardId?: string | null }
@@ -29,6 +30,7 @@ export type NativeRoute = NativeAppRoute | NativeAuthRoute;
 
 function normalizeAppTab(value: string | null): NativeAppTab | undefined {
   if (
+    value === "today" ||
     value === "goals" ||
     value === "reminders" ||
     value === "challenges" ||

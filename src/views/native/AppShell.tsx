@@ -8,11 +8,12 @@ import { parseNativeAppRoute, type NativeAppTab } from "@/app/router.native";
 import { NativeAppHeader } from "@/components/native/NativeAppHeader";
 import { MissionRewardModal } from "@/components/native/MissionRewardModal";
 import { MissionIntroModal } from "@/components/native/MissionIntroModal";
-import { BarChart2, Bell, Gift, Swords, Target } from "@/components/native/icons";
+import { BarChart2, Bell, Gift, Home, Swords, Target } from "@/components/native/icons";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
 
+const NativeTodayScreen = lazy(() => import("@/views/native/today"));
 const NativeChallengesScreen = lazy(() => import("@/views/native/challenges"));
 const NativeGoalsScreen = lazy(() => import("@/views/native/goals"));
 const NativeProgressScreen = lazy(() => import("@/views/native/ProgressView"));
@@ -85,7 +86,7 @@ function syncPreviewUrl(state: ReturnType<typeof parseNativeAppRoute>) {
 export default function NativeAppShell({ mode = "standalone" }: { mode?: "preview" | "standalone" }) {
   const { t } = useTranslation();
   const { user } = useAppStore();
-  const [activeTab, setActiveTab] = useState<NativeAppTab>("goals");
+  const [activeTab, setActiveTab] = useState<NativeAppTab>("today");
   const [goalLinkState, setGoalLinkState] = useState<{
     goalId?: string | null;
     reportTaskId?: string | null;
@@ -109,6 +110,7 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
     label: string;
     icon: typeof Target;
   }> = [
+    { key: "today", label: t("navigation.today"), icon: Home },
     { key: "goals", label: t("navigation.goals"), icon: Target },
     { key: "challenges", label: t("navigation.challenges"), icon: Swords },
     { key: "rewards", label: t("navigation.rewards"), icon: Gift },
@@ -213,6 +215,14 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
 
         <View style={{ flex: 1 }}>
           <Suspense fallback={<NativeScreenFallback />}>
+            {activeTab === "today" && (
+              <NativeTodayScreen
+                onOpenGoal={(goalId) => {
+                  setGoalLinkState({ goalId });
+                  setActiveTab("goals");
+                }}
+              />
+            )}
             {activeTab === "goals" && (
               <NativeGoalsScreen
                 goalId={goalLinkState.goalId}

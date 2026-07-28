@@ -65,6 +65,7 @@
                     "description":  "The path to a better version of yourself"
                 },
     "navigation":  {
+                       "today":  "Today",
                        "goals":  "Goals",
                        "challenges":  "Challenges",
                        "frens":  "Friends",
