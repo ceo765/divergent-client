@@ -8,11 +8,12 @@ export type TodayItem = {
   key: string;
   goalId: string;
   goalTitle: string;
-  title: string;
   category: string;
-  done: boolean;
-  kind: "task" | "deadline";
-  taskId?: string;
+  total: number;
+  done: number;
+  allDone: boolean;
+  singleTaskId?: string;
+  isDeadline: boolean;
   goalPeriod: Goal["goalPeriod"];
 };
 
@@ -20,11 +21,8 @@ function leafTasks(tasks: Task[]): Task[] {
   const out: Task[] = [];
   const walk = (list: Task[]) => {
     for (const t of list) {
-      if (t.subtasks && t.subtasks.length > 0) {
-        walk(t.subtasks);
-      } else {
-        out.push(t);
-      }
+      if (t.subtasks && t.subtasks.length > 0) walk(t.subtasks);
+      else out.push(t);
     }
   };
   walk(tasks ?? []);
@@ -46,55 +44,42 @@ export function useTodayScreen() {
     for (const goal of goals) {
       if (goal.archivedAt) continue;
 
-      // Дедлайн сегодня
-      if (isDueToday(goal.dueDate)) {
-        const anyLeftToday =
-          goal.goalType !== "TASK" ||
-          leafTasks(goal.tasks).some((t) => !isTaskCompletedThisPeriod(t, goal.goalPeriod));
-        result.push({
-          key: `deadline-${goal.id}`,
-          goalId: goal.id,
-          goalTitle: goal.title,
-          title: goal.title,
-          category: goal.category,
-          done: !anyLeftToday,
-          kind: "deadline",
-          goalPeriod: goal.goalPeriod,
-        });
-      }
+      const recurring = goal.goalType === "TASK" && goal.goalPeriod !== "NONE";
+      const deadline = isDueToday(goal.dueDate);
+      if (!recurring && !deadline) continue;
 
-      // Задачи регулярных целей (ежедневных/недельных/месячных)
-      if (goal.goalType === "TASK" && goal.goalPeriod !== "NONE") {
-        for (const task of leafTasks(goal.tasks)) {
-          result.push({
-            key: `task-${task.id}`,
-            goalId: goal.id,
-            goalTitle: goal.title,
-            title: task.title,
-            category: goal.category,
-            done: isTaskCompletedThisPeriod(task, goal.goalPeriod),
-            kind: "task",
-            taskId: task.id,
-            goalPeriod: goal.goalPeriod,
-          });
-        }
-      }
+      const leaves = goal.goalType === "TASK" ? leafTasks(goal.tasks) : [];
+      const total = leaves.length;
+      const done = leaves.filter((t) => isTaskCompletedThisPeriod(t, goal.goalPeriod)).length;
+
+      result.push({
+        key: `goal-${goal.id}`,
+        goalId: goal.id,
+        goalTitle: goal.title,
+        category: goal.category,
+        total,
+        done,
+        allDone: total > 0 ? done === total : false,
+        singleTaskId: total === 1 ? leaves[0].id : undefined,
+        isDeadline: deadline,
+        goalPeriod: goal.goalPeriod,
+      });
     }
 
-    // Невыполненные сверху, дедлайны выше обычных задач
+    // Незавершённые сверху, дедлайны выше
     return result.sort((a, b) => {
-      if (a.done !== b.done) return a.done ? 1 : -1;
-      if (a.kind !== b.kind) return a.kind === "deadline" ? -1 : 1;
+      if (a.allDone !== b.allDone) return a.allDone ? 1 : -1;
+      if (a.isDeadline !== b.isDeadline) return a.isDeadline ? -1 : 1;
       return 0;
     });
   }, [goals]);
 
   const total = items.length;
-  const done = items.filter((i) => i.done).length;
+  const done = items.filter((i) => i.allDone).length;
 
   const toggle = async (item: TodayItem) => {
-    if (item.taskId) {
-      await toggleTask(item.taskId);
+    if (item.singleTaskId) {
+      await toggleTask(item.singleTaskId);
     }
   };
 
