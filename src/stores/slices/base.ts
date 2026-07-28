@@ -8,6 +8,7 @@ export const createBaseSlice: StoreSlice<AppStoreState> = () => ({
   goals: [],
   archivedGoals: [],
   notes: [],
+  collections: [],
   challenges: [],
   rewards: [],
   reminders: [],

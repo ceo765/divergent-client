@@ -7,6 +7,7 @@ import { NativeNavigationProvider } from "@/app/native/NativeNavigation";
 import { parseNativeAppRoute, type NativeAppTab } from "@/app/router.native";
 import { NativeAppHeader } from "@/components/native/NativeAppHeader";
 import { ShowcaseSheet } from "@/components/native/ShowcaseSheet";
+import { CollectionsSheet } from "@/components/native/CollectionsSheet";
 import { MissionRewardModal } from "@/components/native/MissionRewardModal";
 import { MissionIntroModal } from "@/components/native/MissionIntroModal";
 import { BarChart2, Bell, Gift, Home, Swords, Target } from "@/components/native/icons";
@@ -89,6 +90,7 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
   const { user } = useAppStore();
   const [activeTab, setActiveTab] = useState<NativeAppTab>("today");
   const [showcaseOpen, setShowcaseOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [goalLinkState, setGoalLinkState] = useState<{
     goalId?: string | null;
     reportTaskId?: string | null;
@@ -213,7 +215,7 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
   return (
     <NativeNavigationProvider value={navigationValue}>
       <SafeAreaView style={{ flex: 1, backgroundColor: appPalette.surface.background }}>
-        {!!user && <NativeAppHeader user={user} missionBadgeCount={missionState?.badgeCount ?? 0} onOpenMissions={() => setActiveTab("missions")} onOpenSettings={() => setActiveTab("settings")} onOpenShowcase={() => setShowcaseOpen(true)} />}
+        {!!user && <NativeAppHeader user={user} missionBadgeCount={missionState?.badgeCount ?? 0} onOpenMissions={() => setActiveTab("missions")} onOpenSettings={() => setActiveTab("settings")} onOpenShowcase={() => setShowcaseOpen(true)} onOpenCollections={() => setCollectionsOpen(true)} />}
 
         <View style={{ flex: 1 }}>
           <Suspense fallback={<NativeScreenFallback />}>
@@ -329,6 +331,7 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
         <MissionIntroModal onStart={() => setActiveTab("missions")} />
         <MissionRewardModal />
         <ShowcaseSheet open={showcaseOpen} onOpenChange={setShowcaseOpen} />
+        <CollectionsSheet open={collectionsOpen} onOpenChange={setCollectionsOpen} />
       </SafeAreaView>
     </NativeNavigationProvider>
   );

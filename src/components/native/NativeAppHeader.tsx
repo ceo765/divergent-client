@@ -2,7 +2,7 @@
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 import { useTranslation } from "react-i18next";
 
-import { ScrollText, Settings } from "@/components/native/icons";
+import { GraduationCap, ScrollText, Settings } from "@/components/native/icons";
 import { appPalette } from "@/theme/palette";
 import type { User } from "@/types";
 
@@ -21,12 +21,14 @@ export function NativeAppHeader({
   onOpenMissions,
   onOpenSettings,
   onOpenShowcase,
+  onOpenCollections,
 }: {
   user: User;
   missionBadgeCount: number;
   onOpenMissions: () => void;
   onOpenSettings: () => void;
   onOpenShowcase?: () => void;
+  onOpenCollections?: () => void;
 }) {
   const { t } = useTranslation();
   const progress = user.requiredXp > 0 ? Math.min((user.xp / user.requiredXp) * 100, 100) : 0;
@@ -100,6 +102,9 @@ export function NativeAppHeader({
             </Text>
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+              <Pressable onPress={onOpenCollections} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
+                <GraduationCap size={20} color={appPalette.semantic.textMuted} />
+              </Pressable>
               <Pressable onPress={onOpenMissions} hitSlop={8} style={{ position: "relative", width: 36, height: 36, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
                 {!!missionBadgeCount && <View style={{ position: "absolute", right: -1, top: -3, zIndex: 2, width: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: appPalette.semantic.dangerStrong }}><Text style={{ color: "white", fontSize: 10, fontWeight: "700" }}>{missionBadgeCount}</Text></View>}
                 <ScrollText size={20} color={appPalette.semantic.textMuted} />

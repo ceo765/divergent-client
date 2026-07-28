@@ -15,6 +15,7 @@ import type {
   ProgressDayDetail,
   Leader,
   Note,
+  CollectionItem,
   PaymentMethod,
   OnboardingStepKey,
   Reminder,
@@ -42,6 +43,7 @@ export interface AppStoreState {
   goals: Goal[];
   archivedGoals: Goal[];
   notes: Note[];
+  collections: CollectionItem[];
   challenges: Challenge[];
   rewards: Reward[];
   reminders: Reminder[];
@@ -99,6 +101,10 @@ export interface AppStoreActions {
   addNote: (input: { title?: string | null; body: string }) => Promise<Note | null>;
   editNote: (id: string, input: { title?: string | null; body?: string }) => Promise<void>;
   removeNote: (id: string) => Promise<void>;
+  loadCollections: () => Promise<void>;
+  addCollectionItem: (input: { type: "book" | "film"; title: string; author?: string | null }) => Promise<CollectionItem | null>;
+  editCollectionItem: (id: string, input: Partial<Pick<CollectionItem, "title" | "author" | "status" | "rating" | "note">>) => Promise<void>;
+  removeCollectionItem: (id: string) => Promise<void>;
   updateGoal: (goal: Goal) => Promise<void>;
   updateGoalProgress: (goalId: string, delta: number) => Promise<void>;
   completeOnboardingStep: (step: OnboardingStepKey) => Promise<void>;

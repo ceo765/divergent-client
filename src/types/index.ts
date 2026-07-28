@@ -73,6 +73,18 @@ export interface Note {
   updatedAt: string;
 }
 
+export interface CollectionItem {
+  id: string;
+  type: "book" | "film";
+  title: string;
+  author?: string | null;
+  status: "planned" | "done";
+  rating?: number | null;
+  note?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ChallengeGoal {
   challengeId: string;
   goalId: string;

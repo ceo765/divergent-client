@@ -16,6 +16,7 @@ import type {
   FriendSummary,
   Goal,
   Note,
+  CollectionItem,
   OnboardingStepKey,
   Reminder,
   ReportUploadPayload,
@@ -319,6 +320,22 @@ export async function updateNote(id: string, input: { title?: string | null; bod
 
 export async function deleteNote(id: string) {
   return fetchJSON(`/api/notes/${id}`, { method: "DELETE" });
+}
+
+export async function fetchCollections(): Promise<CollectionItem[]> {
+  return fetchJSON("/api/collections");
+}
+
+export async function createCollectionItem(input: { type: "book" | "film"; title: string; author?: string | null }): Promise<CollectionItem> {
+  return fetchJSON("/api/collections", { method: "POST", body: JSON.stringify(input) });
+}
+
+export async function updateCollectionItem(id: string, input: Partial<Pick<CollectionItem, "title" | "author" | "status" | "rating" | "note">>): Promise<CollectionItem> {
+  return fetchJSON(`/api/collections/${id}`, { method: "PUT", body: JSON.stringify(input) });
+}
+
+export async function deleteCollectionItem(id: string) {
+  return fetchJSON(`/api/collections/${id}`, { method: "DELETE" });
 }
 
 export async function archiveGoal(id: string) {
