@@ -88,11 +88,28 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }:
     Alert.alert("Готово", "Заметка добавлена в награды.");
   };
 
-  const quickActions = [
+  const categoryLabel = category ? categories.find((c) => c.value === category)?.label ?? "" : "";
+  const categoryHints: Record<string, { label: string; prompt: string }[]> = {
+    "Фитнес": [
+      { label: "Составь тренировку", prompt: "Составь мне программу тренировок с упражнениями и подходами." },
+      { label: "Разбор прогресса", prompt: "Посмотри мои тренировки и веса - что улучшить?" },
+    ],
+    "Финансы": [
+      { label: "Накопить на цель", prompt: "Помоги составить план накоплений под мою финансовую цель." },
+      { label: "Разбор трат", prompt: "Как мне лучше распределять бюджет?" },
+    ],
+    "Здоровье": [
+      { label: "План привычек", prompt: "Помоги выстроить полезные привычки для здоровья." },
+      { label: "Режим сна/питания", prompt: "Дай рекомендации по режиму сна и питания." },
+    ],
+  };
+  const defaultQuick = [
     { label: t("ai.quick_action_capabilities"), prompt: t("ai.quick_prompt_capabilities") },
     { label: t("ai.quick_action_goal"), prompt: t("ai.quick_prompt_goal") },
     { label: t("ai.quick_action_progress"), prompt: t("ai.quick_prompt_progress") },
   ];
+  const quickActions = categoryHints[categoryLabel] ?? defaultQuick;
+  const greeting = categoryLabel ? `Привет! Я твой коуч по теме «${categoryLabel}». С чего начнём?` : "Привет! Я твой коуч. Чем помочь?";
 
   return (
     <Modal visible={open} transparent animationType="none" onRequestClose={() => onOpenChange(false)}>
@@ -152,7 +169,7 @@ export function AiChatSheet({ open, onOpenChange, onDraftAdded, initialPrompt }:
                   <SurfaceCard gap={12} padding={16} radius={16}>
                     <View style={{ gap: 6 }}>
                       <SelectableText style={{ color: appPalette.semantic.textStrong, fontSize: 16, lineHeight: 24, fontWeight: "700", fontFamily: "Montserrat" }}>
-                        {t("ai.welcome_title")}
+                        {greeting}
                       </SelectableText>
                       <SelectableText style={{ color: appPalette.semantic.textMuted, fontSize: 12, lineHeight: 18, fontFamily: "Montserrat" }}>
                         {t("ai.welcome_description")}
