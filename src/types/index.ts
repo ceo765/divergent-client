@@ -75,12 +75,14 @@ export interface Note {
 
 export interface CollectionItem {
   id: string;
-  type: "book" | "film";
+  type: string;
   title: string;
   author?: string | null;
   status: "planned" | "done";
   rating?: number | null;
   note?: string | null;
+  goalId?: string | null;
+  taskId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

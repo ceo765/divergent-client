@@ -326,8 +326,12 @@ export async function fetchCollections(): Promise<CollectionItem[]> {
   return fetchJSON("/api/collections");
 }
 
-export async function createCollectionItem(input: { type: "book" | "film"; title: string; author?: string | null }): Promise<CollectionItem> {
+export async function createCollectionItem(input: { type: string; title: string; author?: string | null }): Promise<CollectionItem> {
   return fetchJSON("/api/collections", { method: "POST", body: JSON.stringify(input) });
+}
+
+export async function collectionToGoal(id: string, goalId: string): Promise<CollectionItem> {
+  return fetchJSON(`/api/collections/${id}/to-goal`, { method: "POST", body: JSON.stringify({ goalId }) });
 }
 
 export async function updateCollectionItem(id: string, input: Partial<Pick<CollectionItem, "title" | "author" | "status" | "rating" | "note">>): Promise<CollectionItem> {

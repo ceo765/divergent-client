@@ -3,7 +3,7 @@ import type { AppStoreActions, StoreSlice } from "@/stores/types";
 
 type CollectionsSlice = Pick<
   AppStoreActions,
-  "loadCollections" | "addCollectionItem" | "editCollectionItem" | "removeCollectionItem"
+  "loadCollections" | "addCollectionItem" | "editCollectionItem" | "removeCollectionItem" | "sendCollectionToGoal"
 >;
 
 export const createCollectionsSlice: StoreSlice<CollectionsSlice> = (set, get) => ({
@@ -40,6 +40,16 @@ export const createCollectionsSlice: StoreSlice<CollectionsSlice> = (set, get) =
     try {
       await api.deleteCollectionItem(id);
       set({ collections: get().collections.filter((c) => c.id !== id) });
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  sendCollectionToGoal: async (id, goalId) => {
+    try {
+      const updated = await api.collectionToGoal(id, goalId);
+      set({ collections: get().collections.map((c) => (c.id === id ? updated : c)) });
+      await get().refreshAppData();
     } catch (err) {
       console.error(err);
     }

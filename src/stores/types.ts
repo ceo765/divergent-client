@@ -102,9 +102,10 @@ export interface AppStoreActions {
   editNote: (id: string, input: { title?: string | null; body?: string }) => Promise<void>;
   removeNote: (id: string) => Promise<void>;
   loadCollections: () => Promise<void>;
-  addCollectionItem: (input: { type: "book" | "film"; title: string; author?: string | null }) => Promise<CollectionItem | null>;
+  addCollectionItem: (input: { type: string; title: string; author?: string | null }) => Promise<CollectionItem | null>;
   editCollectionItem: (id: string, input: Partial<Pick<CollectionItem, "title" | "author" | "status" | "rating" | "note">>) => Promise<void>;
   removeCollectionItem: (id: string) => Promise<void>;
+  sendCollectionToGoal: (id: string, goalId: string) => Promise<void>;
   updateGoal: (goal: Goal) => Promise<void>;
   updateGoalProgress: (goalId: string, delta: number) => Promise<void>;
   completeOnboardingStep: (step: OnboardingStepKey) => Promise<void>;
