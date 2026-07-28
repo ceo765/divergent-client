@@ -20,11 +20,13 @@ export function NativeAppHeader({
   missionBadgeCount,
   onOpenMissions,
   onOpenSettings,
+  onOpenShowcase,
 }: {
   user: User;
   missionBadgeCount: number;
   onOpenMissions: () => void;
   onOpenSettings: () => void;
+  onOpenShowcase?: () => void;
 }) {
   const { t } = useTranslation();
   const progress = user.requiredXp > 0 ? Math.min((user.xp / user.requiredXp) * 100, 100) : 0;
@@ -50,7 +52,7 @@ export function NativeAppHeader({
           backgroundColor: appPalette.surface.card,
         }}
       >
-        <View style={{ position: "relative" }}>
+        <Pressable style={{ position: "relative" }} onPress={onOpenShowcase} hitSlop={6}>
           {user.photoUrl ? (
             <Image
               source={{ uri: user.photoUrl }}
@@ -86,7 +88,7 @@ export function NativeAppHeader({
           >
             <Text style={{ color: appPalette.brand.primaryForeground, fontSize: 12, fontWeight: "500", fontFamily: "Montserrat", lineHeight: 18 }}>{user.level}</Text>
           </View>
-        </View>
+        </Pressable>
 
         <View style={{ flex: 1, gap: 10 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>

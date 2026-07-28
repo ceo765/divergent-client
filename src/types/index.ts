@@ -310,6 +310,7 @@ export interface User {
   language: string | null;
   timeZone: string;
   onboardingState?: OnboardingState | null;
+  showcasePublic?: boolean;
 }
 
 export type PaymentMethod = "YOUKASSA";
