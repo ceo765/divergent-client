@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Modal, ScrollView, Text, TextInput, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, View } from "react-native";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 
 import { AiChatSheet } from "@/components/native/AiChatSheet";
@@ -75,6 +75,7 @@ export function CollectionsSheet({ open, onOpenChange }: { open: boolean; onOpen
 
   return (
     <Modal visible={open} transparent animationType="slide" onRequestClose={() => onOpenChange(false)}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={{ flex: 1, backgroundColor: appPalette.surface.overlay, justifyContent: "flex-end" }}>
         <View style={{ maxHeight: "90%", backgroundColor: appPalette.surface.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -168,6 +169,7 @@ export function CollectionsSheet({ open, onOpenChange }: { open: boolean; onOpen
           </Pressable>
         </View>
       </View>
+      </KeyboardAvoidingView>
 
       {aiOpen && <AiChatSheet open={aiOpen} onOpenChange={setAiOpen} onDraftAdded={() => {}} initialPrompt={coachPrompt()} />}
     </Modal>
