@@ -102,8 +102,20 @@ export interface AppStoreActions {
   editNote: (id: string, input: { title?: string | null; body?: string }) => Promise<void>;
   removeNote: (id: string) => Promise<void>;
   loadCollections: () => Promise<void>;
-  addCollectionItem: (input: { type: string; title: string; author?: string | null }) => Promise<CollectionItem | null>;
-  editCollectionItem: (id: string, input: Partial<Pick<CollectionItem, "title" | "author" | "status" | "rating" | "note">>) => Promise<void>;
+  addCollectionItem: (input: {
+    type: string;
+    title: string;
+    author?: string | null;
+    status?: CollectionItem["status"];
+    note?: string | null;
+    eventDate?: string | null;
+    location?: string | null;
+    reminderAt?: string | null;
+  }) => Promise<CollectionItem | null>;
+  editCollectionItem: (
+    id: string,
+    input: Partial<Pick<CollectionItem, "title" | "author" | "status" | "rating" | "note" | "eventDate" | "location" | "reminderAt">>
+  ) => Promise<void>;
   removeCollectionItem: (id: string) => Promise<void>;
   sendCollectionToGoal: (id: string, goalId: string) => Promise<void>;
   updateGoal: (goal: Goal) => Promise<void>;

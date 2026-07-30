@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 
 import { AiChatSheet } from "@/components/native/AiChatSheet";
-import { ChevronDown, CircleCheck, Clock, Sparkles } from "@/components/native/icons";
+import { Calendar, ChevronDown, CircleCheck, Clock, MapPin, Sparkles } from "@/components/native/icons";
 import { useTodayScreen, type TodayItem } from "@/shared/screens/today/useTodayScreen";
+import { useAppStore } from "@/stores/useAppStore";
+import { formatEventWhen } from "@/shared/utils/eventDate";
 import { appPalette } from "@/theme/palette";
 
 function todayLabel(): string {
@@ -59,6 +61,24 @@ export default function NativeTodayScreen({ onOpenGoal }: { onOpenGoal: (goalId:
   const [aiOpen, setAiOpen] = useState(false);
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
+  const collections = useAppStore((s) => s.collections);
+  const loadCollections = useAppStore((s) => s.loadCollections);
+  useEffect(() => {
+    void loadCollections();
+  }, [loadCollections]);
+
+  // Ближайшие события, куда я иду («Пойду»): сегодня и в пределах недели.
+  const upcomingEvents = useMemo(() => {
+    const now = Date.now();
+    const weekAhead = now + 7 * 24 * 60 * 60 * 1000;
+    return collections
+      .filter((c) => c.type === "События" && c.status === "going" && !!c.eventDate)
+      .map((c) => ({ item: c, t: new Date(c.eventDate as string).getTime() }))
+      .filter((e) => e.t >= now - 3 * 60 * 60 * 1000 && e.t <= weekAhead)
+      .sort((a, b) => a.t - b.t)
+      .slice(0, 3);
+  }, [collections]);
+
   return (
     <View style={{ flex: 1, backgroundColor: appPalette.surface.background }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
@@ -70,6 +90,31 @@ export default function NativeTodayScreen({ onOpenGoal }: { onOpenGoal: (goalId:
         {total > 0 && (
           <View style={{ height: 6, borderRadius: 3, backgroundColor: appPalette.semantic.borderSubtle, overflow: "hidden", marginTop: 14, marginBottom: 6 }}>
             <View style={{ width: `${pct}%`, height: "100%", borderRadius: 3, backgroundColor: appPalette.brand.primary }} />
+          </View>
+        )}
+
+        {upcomingEvents.length > 0 && (
+          <View style={{ marginTop: 14, backgroundColor: appPalette.semantic.infoSurface, borderRadius: 14, padding: 12, gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Calendar size={13} color={appPalette.brand.primary} />
+              <Text style={{ fontSize: 12, fontWeight: "700", color: appPalette.brand.primary, fontFamily: "Montserrat", lineHeight: 16 }}>Иду на</Text>
+            </View>
+            {upcomingEvents.map(({ item }) => (
+              <View key={item.id} style={{ gap: 2 }}>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 18 }} numberOfLines={1}>{item.title}</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                  {item.eventDate && (
+                    <Text style={{ fontSize: 11, color: appPalette.semantic.textMuted, fontFamily: "Montserrat" }}>{formatEventWhen(item.eventDate)}</Text>
+                  )}
+                  {!!item.location && (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 3, flexShrink: 1 }}>
+                      <MapPin size={11} color={appPalette.semantic.textMuted} />
+                      <Text style={{ fontSize: 11, color: appPalette.semantic.textMuted, fontFamily: "Montserrat" }} numberOfLines={1}>{item.location}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ))}
           </View>
         )}
 

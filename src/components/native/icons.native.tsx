@@ -21,6 +21,7 @@
   GraduationCap,
   Heart,
   Home,
+  MapPin,
   Palette,
   Plus,
   Repeat,

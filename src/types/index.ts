@@ -73,16 +73,23 @@ export interface Note {
   updatedAt: string;
 }
 
+export type CollectionStatus = "planned" | "done" | "want" | "going" | "attended";
+
 export interface CollectionItem {
   id: string;
   type: string;
   title: string;
   author?: string | null;
-  status: "planned" | "done";
+  status: CollectionStatus;
   rating?: number | null;
   note?: string | null;
   goalId?: string | null;
   taskId?: string | null;
+  // Поля события (категория «События»)
+  eventDate?: string | null;
+  location?: string | null;
+  reminderAt?: string | null;
+  reminderSentAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

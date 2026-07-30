@@ -3,12 +3,36 @@ import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInp
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 
 import { AiChatSheet } from "@/components/native/AiChatSheet";
-import { CircleCheck, Plus, Sparkles, Star, Target, X } from "@/components/native/icons";
+import { Bell, Calendar, CircleCheck, Clock, MapPin, Plus, Sparkles, Star, Target, X } from "@/components/native/icons";
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
 import type { CollectionItem } from "@/types";
+import {
+  byEventDate,
+  combineDayTime,
+  dayChipLabel,
+  formatEventWhen,
+  isSameDay,
+  isUpcoming,
+  nextDays,
+  reminderFromEvent,
+  type ReminderLead,
+} from "@/shared/utils/eventDate";
 
-const DEFAULT_CATEGORIES = ["Книги", "Фильмы"];
+const EVENTS_CATEGORY = "События";
+const DEFAULT_CATEGORIES = ["Книги", "Фильмы", EVENTS_CATEGORY];
+
+const EVENT_STATUSES: { key: CollectionItem["status"]; label: string }[] = [
+  { key: "want", label: "Хочу пойти" },
+  { key: "going", label: "Пойду" },
+  { key: "attended", label: "Был" },
+];
+
+const LEADS: { key: ReminderLead; label: string }[] = [
+  { key: "1h", label: "за 1 ч" },
+  { key: "3h", label: "за 3 ч" },
+  { key: "eve", label: "накануне" },
+];
 
 function Stars({ value, onSet }: { value: number; onSet: (v: number) => void }) {
   return (
@@ -30,6 +54,15 @@ export function CollectionsSheet({ open, onOpenChange }: { open: boolean; onOpen
   const [aiOpen, setAiOpen] = useState(false);
   const [pickingFor, setPickingFor] = useState<string | null>(null);
 
+  // Состояние составителя события
+  const [eventDay, setEventDay] = useState<Date>(() => new Date());
+  const [eventTime, setEventTime] = useState("19:00");
+  const [eventPlace, setEventPlace] = useState("");
+  const [eventLead, setEventLead] = useState<ReminderLead>("3h");
+
+  const isEvents = tab === EVENTS_CATEGORY;
+  const days = useMemo(() => nextDays(21), []);
+
   useEffect(() => {
     if (open) void loadCollections();
   }, [open, loadCollections]);
@@ -39,13 +72,31 @@ export function CollectionsSheet({ open, onOpenChange }: { open: boolean; onOpen
     return Array.from(set);
   }, [collections, extraCats]);
 
-  const items = useMemo(() => collections.filter((c) => c.type === tab), [collections, tab]);
+  const items = useMemo(() => {
+    const list = collections.filter((c) => c.type === tab);
+    return isEvents ? [...list].sort(byEventDate) : list;
+  }, [collections, tab, isEvents]);
 
   const add = () => {
     const title = draft.trim();
     if (!title) return;
-    void addCollectionItem({ type: tab, title });
-    setDraft("");
+    if (isEvents) {
+      const when = combineDayTime(eventDay, eventTime);
+      const remind = reminderFromEvent(when, eventLead);
+      void addCollectionItem({
+        type: tab,
+        title,
+        status: "want",
+        eventDate: when.toISOString(),
+        location: eventPlace.trim() || null,
+        reminderAt: remind.toISOString(),
+      });
+      setDraft("");
+      setEventPlace("");
+    } else {
+      void addCollectionItem({ type: tab, title });
+      setDraft("");
+    }
   };
 
   const addCategory = () => {
@@ -64,6 +115,9 @@ export function CollectionsSheet({ open, onOpenChange }: { open: boolean; onOpen
   };
 
   const coachPrompt = () => {
+    if (isEvents) {
+      return "Хочу регулярно ходить на живые мероприятия - нетворкинг, разговорный английский, встречи по интересам. Подскажи, какие форматы искать под мои цели и как не бросить.";
+    }
     const done = collections.filter((c) => c.status === "done");
     const byCat: Record<string, string[]> = {};
     for (const c of done) (byCat[c.type] ??= []).push(`${c.title}${c.rating ? ` (${c.rating}/5)` : ""}`);
@@ -98,23 +152,129 @@ export function CollectionsSheet({ open, onOpenChange }: { open: boolean; onOpen
             </Pressable>
           </View>
 
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder={`Добавить в «${tab}»…`}
-              placeholderTextColor={appPalette.semantic.textSubtle}
-              onSubmitEditing={add}
-              style={{ flex: 1, height: 40, borderWidth: 1, borderColor: appPalette.semantic.borderStrong, borderRadius: 12, paddingHorizontal: 12, color: appPalette.semantic.textStrong, fontFamily: "Montserrat", fontSize: 13 }}
-            />
-            <Pressable onPress={add} style={{ width: 44, height: 40, borderRadius: 12, backgroundColor: appPalette.brand.primary, alignItems: "center", justifyContent: "center" }}>
-              <Plus size={20} color={appPalette.semantic.textInverse} />
-            </Pressable>
-          </View>
+          {isEvents ? (
+            <View style={{ gap: 8 }}>
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="Название события (напр. Нетворкинг в SkyHub)"
+                placeholderTextColor={appPalette.semantic.textSubtle}
+                style={{ height: 40, borderWidth: 1, borderColor: appPalette.semantic.borderStrong, borderRadius: 12, paddingHorizontal: 12, color: appPalette.semantic.textStrong, fontFamily: "Montserrat", fontSize: 13 }}
+              />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 1 }}>
+                {days.map((d) => {
+                  const active = isSameDay(d, eventDay);
+                  return (
+                    <Pressable key={d.toISOString()} onPress={() => setEventDay(d)} style={{ paddingHorizontal: 11, paddingVertical: 7, borderRadius: 12, borderWidth: 1, borderColor: active ? appPalette.brand.primary : appPalette.semantic.borderSubtle, backgroundColor: active ? appPalette.brand.primary : appPalette.semantic.neutralSurfaceStrong }}>
+                      <Text style={{ color: active ? appPalette.semantic.textInverse : appPalette.semantic.textStrong, fontSize: 12, fontFamily: "Montserrat", lineHeight: 16 }}>{dayChipLabel(d)}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+              <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderColor: appPalette.semantic.borderStrong, borderRadius: 12, paddingHorizontal: 10, height: 40 }}>
+                  <Clock size={14} color={appPalette.semantic.textMuted} />
+                  <TextInput
+                    value={eventTime}
+                    onChangeText={setEventTime}
+                    placeholder="19:00"
+                    placeholderTextColor={appPalette.semantic.textSubtle}
+                    keyboardType="numbers-and-punctuation"
+                    maxLength={5}
+                    style={{ width: 44, color: appPalette.semantic.textStrong, fontFamily: "Montserrat", fontSize: 13 }}
+                  />
+                </View>
+                <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderColor: appPalette.semantic.borderStrong, borderRadius: 12, paddingHorizontal: 10, height: 40 }}>
+                  <MapPin size={14} color={appPalette.semantic.textMuted} />
+                  <TextInput
+                    value={eventPlace}
+                    onChangeText={setEventPlace}
+                    placeholder="Место или ссылка"
+                    placeholderTextColor={appPalette.semantic.textSubtle}
+                    style={{ flex: 1, color: appPalette.semantic.textStrong, fontFamily: "Montserrat", fontSize: 13 }}
+                  />
+                </View>
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 5, flex: 1 }}>
+                  <Bell size={13} color={appPalette.semantic.textMuted} />
+                  {LEADS.map((l) => {
+                    const active = eventLead === l.key;
+                    return (
+                      <Pressable key={l.key} onPress={() => setEventLead(l.key)} style={{ paddingHorizontal: 9, paddingVertical: 5, borderRadius: 10, borderWidth: 1, borderColor: active ? appPalette.brand.primary : appPalette.semantic.borderSubtle, backgroundColor: active ? appPalette.semantic.infoSurface : "transparent" }}>
+                        <Text style={{ color: active ? appPalette.brand.primary : appPalette.semantic.textMuted, fontSize: 11, fontFamily: "Montserrat", fontWeight: active ? "600" : "400" }}>{l.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Pressable onPress={add} style={{ width: 44, height: 40, borderRadius: 12, backgroundColor: appPalette.brand.primary, alignItems: "center", justifyContent: "center" }}>
+                  <Plus size={20} color={appPalette.semantic.textInverse} />
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder={`Добавить в «${tab}»…`}
+                placeholderTextColor={appPalette.semantic.textSubtle}
+                onSubmitEditing={add}
+                style={{ flex: 1, height: 40, borderWidth: 1, borderColor: appPalette.semantic.borderStrong, borderRadius: 12, paddingHorizontal: 12, color: appPalette.semantic.textStrong, fontFamily: "Montserrat", fontSize: 13 }}
+              />
+              <Pressable onPress={add} style={{ width: 44, height: 40, borderRadius: 12, backgroundColor: appPalette.brand.primary, alignItems: "center", justifyContent: "center" }}>
+                <Plus size={20} color={appPalette.semantic.textInverse} />
+              </Pressable>
+            </View>
+          )}
 
-          <ScrollView contentContainerStyle={{ gap: 8, paddingBottom: 4 }} keyboardShouldPersistTaps="handled" style={{ maxHeight: "56%" }}>
+          <ScrollView contentContainerStyle={{ gap: 8, paddingBottom: 4 }} keyboardShouldPersistTaps="handled" style={{ maxHeight: "52%" }}>
             {items.length === 0 ? (
-              <Text style={{ color: appPalette.semantic.textSubtle, fontSize: 12, fontFamily: "Montserrat", lineHeight: 18, paddingVertical: 12 }}>Пусто. Добавь и отмечай, что пройдено.</Text>
+              <Text style={{ color: appPalette.semantic.textSubtle, fontSize: 12, fontFamily: "Montserrat", lineHeight: 18, paddingVertical: 12 }}>
+                {isEvents ? "Пусто. Добавь событие - напомню накануне." : "Пусто. Добавь и отмечай, что пройдено."}
+              </Text>
+            ) : isEvents ? (
+              items.map((item) => {
+                const upcoming = isUpcoming(item.eventDate);
+                return (
+                  <View key={item.id} style={{ backgroundColor: appPalette.semantic.neutralSurfaceStrong, borderRadius: 12, padding: 11, gap: 8, opacity: upcoming ? 1 : 0.6 }}>
+                    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+                      <Text style={{ flex: 1, fontSize: 13, fontWeight: "600", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 18 }} numberOfLines={2}>{item.title}</Text>
+                      <Pressable onPress={() => void removeCollectionItem(item.id)} hitSlop={6}><X size={16} color={appPalette.semantic.textSubtle} /></Pressable>
+                    </View>
+                    <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                      {item.eventDate && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                          <Calendar size={12} color={appPalette.semantic.textMuted} />
+                          <Text style={{ fontSize: 11, color: appPalette.semantic.textMuted, fontFamily: "Montserrat" }}>{formatEventWhen(item.eventDate)}</Text>
+                        </View>
+                      )}
+                      {!!item.location && (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 1 }}>
+                          <MapPin size={12} color={appPalette.semantic.textMuted} />
+                          <Text style={{ fontSize: 11, color: appPalette.semantic.textMuted, fontFamily: "Montserrat" }} numberOfLines={1}>{item.location}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+                      {EVENT_STATUSES.map((s) => {
+                        const active = item.status === s.key;
+                        return (
+                          <Pressable key={s.key} onPress={() => void editCollectionItem(item.id, { status: s.key })} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1, borderColor: active ? appPalette.brand.primary : appPalette.semantic.borderSubtle, backgroundColor: active ? appPalette.brand.primary : "transparent" }}>
+                            <Text style={{ fontSize: 11, color: active ? appPalette.semantic.textInverse : appPalette.semantic.textMuted, fontWeight: active ? "600" : "400", fontFamily: "Montserrat" }}>{s.label}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                    {item.status === "attended" && (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat" }}>Как прошло?</Text>
+                        <Stars value={item.rating ?? 0} onSet={(v) => void editCollectionItem(item.id, { rating: v || null })} />
+                      </View>
+                    )}
+                  </View>
+                );
+              })
             ) : (
               items.map((item) => {
                 const done = item.status === "done";
