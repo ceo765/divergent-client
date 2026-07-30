@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { Image, Modal, ScrollView, Switch, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Modal, ScrollView, Switch, Text, View } from "react-native";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 
-import { Award, CircleCheck, Crown, Flame, Gift, Star, Target, Trophy, X, Zap } from "@/components/native/icons";
+import { Award, CircleCheck, Crown, Flame, Gift, ScrollText, Sparkles, Star, Target, Trophy, X, Zap } from "@/components/native/icons";
+import { LivingAvatarScene, type SceneArtifact } from "@/components/native/LivingAvatarScene";
 import { SurfaceCard } from "@/components/native/SurfaceCard";
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
@@ -17,26 +18,35 @@ const rewardIconMap: Record<string, React.ComponentType<{ size?: number; color?:
   zap: Zap,
 };
 
-function initials(name: string) {
-  return name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2);
-}
-
 export function ShowcaseSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { user, rewards, archivedGoals, loadArchivedGoals, getProgressOverview, updateUser } = useAppStore();
+  const { user, rewards, archivedGoals, collections, loadArchivedGoals, loadCollections, getProgressOverview, updateUser } = useAppStore();
   const [longestStreak, setLongestStreak] = useState(0);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     void loadArchivedGoals();
+    void loadCollections();
     getProgressOverview()
       .then((o) => setLongestStreak(o.longestStreak))
       .catch(() => {});
-  }, [open, loadArchivedGoals, getProgressOverview]);
+  }, [open, loadArchivedGoals, loadCollections, getProgressOverview]);
+
+  const unlocked = rewards.filter((r) => r.isUnlocked);
+
+  // Артефакты вокруг аватара - из реальных данных пользователя.
+  const sceneArtifacts = useMemo<SceneArtifact[]>(() => {
+    const list: SceneArtifact[] = [];
+    if (unlocked.length > 0) list.push({ key: "art", icon: Trophy, color: appPalette.semantic.warningText, value: unlocked.length, x: -0.32, y: 0.12 });
+    if (collections.length > 0) list.push({ key: "col", icon: ScrollText, color: appPalette.brand.primary, value: collections.length, x: -0.78, y: 0.30 });
+    list.push({ key: "coach", icon: Sparkles, color: appPalette.brand.primary, x: 0.78, y: 0.24 });
+    if (longestStreak > 0) list.push({ key: "streak", icon: Flame, color: appPalette.semantic.warningStrong, value: longestStreak, x: -0.92, y: 0.58 });
+    if (archivedGoals.length > 0) list.push({ key: "goals", icon: CircleCheck, color: appPalette.semantic.successStrong, value: archivedGoals.length, x: 0.92, y: 0.54 });
+    return list;
+  }, [unlocked.length, collections.length, longestStreak, archivedGoals.length]);
 
   if (!user) return null;
 
-  const unlocked = rewards.filter((r) => r.isUnlocked);
   const publicOn = user.showcasePublic !== false;
 
   const togglePrivacy = async (value: boolean) => {
@@ -61,18 +71,7 @@ export function ShowcaseSheet({ open, onOpenChange }: { open: boolean; onOpenCha
 
           <ScrollView contentContainerStyle={{ gap: 16, paddingBottom: 8 }}>
             <View style={{ alignItems: "center", gap: 6 }}>
-              <View style={{ position: "relative" }}>
-                {user.photoUrl ? (
-                  <Image source={{ uri: user.photoUrl }} style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: appPalette.semantic.borderSubtle }} />
-                ) : (
-                  <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: appPalette.semantic.infoSurface, alignItems: "center", justifyContent: "center" }}>
-                    <Text style={{ color: appPalette.semantic.infoText, fontSize: 24, fontWeight: "500", fontFamily: "Montserrat" }}>{initials(user.name || "U")}</Text>
-                  </View>
-                )}
-                <View style={{ position: "absolute", bottom: -2, right: -2, width: 26, height: 26, borderRadius: 13, backgroundColor: appPalette.brand.primary, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: appPalette.surface.background }}>
-                  <Text style={{ color: appPalette.brand.primaryForeground, fontSize: 12, fontWeight: "500", fontFamily: "Montserrat" }}>{user.level}</Text>
-                </View>
-              </View>
+              <LivingAvatarScene name={user.name || "U"} level={user.level} photoUrl={user.photoUrl} artifacts={sceneArtifacts} />
               <Text style={{ fontSize: 18, fontWeight: "500", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{user.name}</Text>
               <Text style={{ fontSize: 12, color: appPalette.semantic.textMuted, fontFamily: "Montserrat" }}>Уровень {user.level} · {user.xp} XP</Text>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
