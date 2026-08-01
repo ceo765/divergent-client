@@ -29,7 +29,7 @@ function TodayRow({ item, onToggle, onOpen }: { item: TodayItem; onToggle: () =>
 
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: appPalette.semantic.borderSubtle }}>
-      <Pressable onPress={single ? onToggle : onOpen} hitSlop={8}>
+      <Pressable onPress={onToggle} hitSlop={8}>
         <View style={{ width: 24, height: 24, borderRadius: 8, borderWidth: checked ? 0 : 1.5, borderColor: deadline ? appPalette.semantic.warningStrong : appPalette.semantic.textSubtle, backgroundColor: checked ? appPalette.semantic.successStrong : appPalette.surface.background, alignItems: "center", justifyContent: "center" }}>
           {checked && <CircleCheck size={16} color={appPalette.semantic.textInverse} />}
         </View>
