@@ -352,6 +352,11 @@ export async function deleteCollectionItem(id: string) {
   return fetchJSON(`/api/collections/${id}`, { method: "DELETE" });
 }
 
+// URL захостенного ассета аватара (картинка/луп) на нашем сервере.
+export function avatarAssetUrl(name: string): string {
+  return `${Config.data.api.http.baseURL}/avatars/${name}`;
+}
+
 export async function fetchTodayState(date: string): Promise<TodayState> {
   return fetchJSON(`/api/today/state?date=${encodeURIComponent(date)}`);
 }
