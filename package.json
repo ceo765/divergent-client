@@ -45,6 +45,7 @@
     "expo-notifications": "~55.0.22",
     "expo-secure-store": "^55.0.13",
     "expo-sharing": "^55.0.18",
+    "expo-video": "~55.0.19",
     "expo-web-browser": "^55.0.14",
     "i18next": "^25.5.2",
     "lucide-react": "^0.468.0",

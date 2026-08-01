@@ -94,6 +94,12 @@ export interface CollectionItem {
   updatedAt: string;
 }
 
+export interface TodayState {
+  checks: string[]; // goalId, отмеченные «на сегодня»
+  perfectStreak: number;
+  perfectLongest: number;
+}
+
 export interface ChallengeGoal {
   challengeId: string;
   goalId: string;

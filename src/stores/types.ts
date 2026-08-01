@@ -50,6 +50,10 @@ export interface AppStoreState {
   friends: FriendSummary[];
   categories: CategoryOption[];
   reports: Record<string, Report[]>;
+  // Экран «Сегодня»: отмеченные многозадачные цели + стрик «идеальных дней».
+  todayChecks: string[];
+  todayStreak: number;
+  todayLongest: number;
   nativeToast: {
     id: number;
     title: string;
@@ -118,6 +122,9 @@ export interface AppStoreActions {
   ) => Promise<void>;
   removeCollectionItem: (id: string) => Promise<void>;
   sendCollectionToGoal: (id: string, goalId: string) => Promise<void>;
+  loadTodayState: (date: string) => Promise<void>;
+  setTodayCheck: (goalId: string, on: boolean, date: string) => Promise<void>;
+  setPerfectDay: (date: string, on: boolean) => Promise<void>;
   updateGoal: (goal: Goal) => Promise<void>;
   updateGoalProgress: (goalId: string, delta: number) => Promise<void>;
   completeOnboardingStep: (step: OnboardingStepKey) => Promise<void>;

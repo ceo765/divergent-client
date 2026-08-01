@@ -15,7 +15,24 @@ export type TodayItem = {
   singleTaskId?: string;
   isDeadline: boolean;
   goalPeriod: Goal["goalPeriod"];
+  // Отмечена ли цель в «Сегодня» (одиночная = реально выполнена;
+  // многозадачная = дневная отметка ИЛИ все задачи закрыты).
+  checked: boolean;
 };
+
+export function localDateKey(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Одиночная цель считается закрытой по факту выполнения задачи; многозадачная -
+// по дневной отметке (или если все задачи в цели уже закрыты).
+function computeChecked(item: Omit<TodayItem, "checked">, todayChecks: string[]): boolean {
+  if (item.singleTaskId) return item.allDone;
+  return item.allDone || todayChecks.includes(item.goalId);
+}
 
 function leafTasks(tasks: Task[]): Task[] {
   const out: Task[] = [];
@@ -35,62 +52,75 @@ function isDueToday(dueDate?: string): boolean {
   return String(dueDate).slice(0, 10) === key;
 }
 
+// Базовый список целей на сегодня (без учёта дневных отметок).
+function buildTodayItems(goals: Goal[], todayChecks: string[]): TodayItem[] {
+  const result: TodayItem[] = [];
+
+  for (const goal of goals) {
+    if (goal.archivedAt) continue;
+
+    const recurring = goal.goalType === "TASK" && goal.goalPeriod !== "NONE";
+    const deadline = isDueToday(goal.dueDate);
+    if (!recurring && !deadline) continue;
+
+    const leaves = goal.goalType === "TASK" ? leafTasks(goal.tasks) : [];
+    const total = leaves.length;
+    const done = leaves.filter((t) => isTaskCompletedThisPeriod(t, goal.goalPeriod)).length;
+
+    const base: Omit<TodayItem, "checked"> = {
+      key: `goal-${goal.id}`,
+      goalId: goal.id,
+      goalTitle: goal.title,
+      category: goal.category,
+      total,
+      done,
+      allDone: total > 0 ? done === total : false,
+      singleTaskId: total === 1 ? leaves[0].id : undefined,
+      isDeadline: deadline,
+      goalPeriod: goal.goalPeriod,
+    };
+    result.push({ ...base, checked: computeChecked(base, todayChecks) });
+  }
+
+  // Незакрытые сверху, дедлайны выше
+  return result.sort((a, b) => {
+    if (a.checked !== b.checked) return a.checked ? 1 : -1;
+    if (a.isDeadline !== b.isDeadline) return a.isDeadline ? -1 : 1;
+    return 0;
+  });
+}
+
 export function useTodayScreen() {
-  const { goals, toggleTask } = useAppStore();
+  const goals = useAppStore((s) => s.goals);
+  const todayChecks = useAppStore((s) => s.todayChecks);
+  const todayStreak = useAppStore((s) => s.todayStreak);
+  const todayLongest = useAppStore((s) => s.todayLongest);
+  const toggleTask = useAppStore((s) => s.toggleTask);
+  const setTodayCheck = useAppStore((s) => s.setTodayCheck);
+  const setPerfectDay = useAppStore((s) => s.setPerfectDay);
+  const loadTodayState = useAppStore((s) => s.loadTodayState);
 
-  const items = useMemo<TodayItem[]>(() => {
-    const result: TodayItem[] = [];
-
-    for (const goal of goals) {
-      if (goal.archivedAt) continue;
-
-      const recurring = goal.goalType === "TASK" && goal.goalPeriod !== "NONE";
-      const deadline = isDueToday(goal.dueDate);
-      if (!recurring && !deadline) continue;
-
-      const leaves = goal.goalType === "TASK" ? leafTasks(goal.tasks) : [];
-      const total = leaves.length;
-      const done = leaves.filter((t) => isTaskCompletedThisPeriod(t, goal.goalPeriod)).length;
-
-      result.push({
-        key: `goal-${goal.id}`,
-        goalId: goal.id,
-        goalTitle: goal.title,
-        category: goal.category,
-        total,
-        done,
-        allDone: total > 0 ? done === total : false,
-        singleTaskId: total === 1 ? leaves[0].id : undefined,
-        isDeadline: deadline,
-        goalPeriod: goal.goalPeriod,
-      });
-    }
-
-    // Незавершённые сверху, дедлайны выше
-    return result.sort((a, b) => {
-      if (a.allDone !== b.allDone) return a.allDone ? 1 : -1;
-      if (a.isDeadline !== b.isDeadline) return a.isDeadline ? -1 : 1;
-      return 0;
-    });
-  }, [goals]);
+  const date = localDateKey();
+  const items = useMemo(() => buildTodayItems(goals, todayChecks), [goals, todayChecks]);
 
   const total = items.length;
-  const done = items.filter((i) => i.allDone).length;
+  const done = items.filter((i) => i.checked).length;
 
-  // Галочка в «Сегодня» отмечает ОДНУ задачу за тап (одну тренировку из трёх),
-  // а не закрывает цель целиком: берём следующую невыполненную листовую задачу
-  // за период; если все выполнены - снимаем отметку с последней (откат). Так тап
-  // просто «ставит галочку», не уводя в цель и не завершая всё разом.
+  // Одиночная цель (напр. «Чтение») - реально закрываем задачу (синк в цель).
+  // Многозадачная - ставим/снимаем дневную отметку, НЕ трогая задачи внутри цели.
+  // После любого тапа пересчитываем «идеальный день» (закрыт ли весь список).
   const toggle = async (item: TodayItem) => {
-    const goal = goals.find((g) => g.id === item.goalId);
-    if (!goal || goal.goalType !== "TASK") return;
-    const leaves = leafTasks(goal.tasks);
-    if (leaves.length === 0) return;
+    if (item.singleTaskId) {
+      await toggleTask(item.singleTaskId);
+    } else {
+      await setTodayCheck(item.goalId, !item.checked, date);
+    }
 
-    const nextIncomplete = leaves.find((t) => !isTaskCompletedThisPeriod(t, goal.goalPeriod));
-    const target = nextIncomplete ?? leaves[leaves.length - 1];
-    await toggleTask(target.id);
+    const st = useAppStore.getState();
+    const fresh = buildTodayItems(st.goals, st.todayChecks);
+    const allChecked = fresh.length > 0 && fresh.every((it) => it.checked);
+    await setPerfectDay(date, allChecked);
   };
 
-  return { items, total, done, toggle };
+  return { items, total, done, toggle, date, loadTodayState, todayStreak, todayLongest };
 }

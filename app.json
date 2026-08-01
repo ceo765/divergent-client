@@ -15,7 +15,8 @@
           "NSHealthUpdateUsageDescription": "Divergent может записывать тренировки в приложение «Здоровье».",
           "background": false
         }
-      ]
+      ],
+      "expo-video"
     ],
     "android": {
       "package": "com.spritemedia.divergent"

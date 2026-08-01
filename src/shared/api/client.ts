@@ -24,6 +24,7 @@ import type {
   User,
   ProgressOverview,
   ProgressDayDetail,
+  TodayState,
   PersonalChallengeGoalInput,
   MissionKey,
   MissionState,
@@ -349,6 +350,18 @@ export async function updateCollectionItem(id: string, input: Partial<Pick<Colle
 
 export async function deleteCollectionItem(id: string) {
   return fetchJSON(`/api/collections/${id}`, { method: "DELETE" });
+}
+
+export async function fetchTodayState(date: string): Promise<TodayState> {
+  return fetchJSON(`/api/today/state?date=${encodeURIComponent(date)}`);
+}
+
+export async function postTodayCheck(goalId: string, on: boolean, date: string): Promise<TodayState> {
+  return fetchJSON("/api/today/check", { method: "POST", body: JSON.stringify({ goalId, on, date }) });
+}
+
+export async function postPerfectDay(date: string, on: boolean): Promise<TodayState> {
+  return fetchJSON("/api/today/perfect", { method: "POST", body: JSON.stringify({ date, on }) });
 }
 
 export async function archiveGoal(id: string) {

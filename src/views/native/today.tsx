@@ -3,7 +3,7 @@ import { ScrollView, Text, View } from "react-native";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 
 import { AiChatSheet } from "@/components/native/AiChatSheet";
-import { Calendar, ChevronDown, CircleCheck, Clock, MapPin, Sparkles } from "@/components/native/icons";
+import { Calendar, ChevronDown, CircleCheck, Clock, Flame, MapPin, Sparkles } from "@/components/native/icons";
 import { useTodayScreen, type TodayItem } from "@/shared/screens/today/useTodayScreen";
 import { useAppStore } from "@/stores/useAppStore";
 import { formatEventWhen } from "@/shared/utils/eventDate";
@@ -20,9 +20,13 @@ function todayLabel(): string {
 function TodayRow({ item, onToggle, onOpen }: { item: TodayItem; onToggle: () => void; onOpen: () => void }) {
   const deadline = item.isDeadline;
   const single = !!item.singleTaskId;
-  const checked = item.allDone;
+  const checked = item.checked;
+  // Многозадачная цель, отмеченная «на сегодня», но задачи внутри ещё не все закрыты.
+  const markedToday = item.total > 1 && item.checked && !item.allDone;
   const subtitle = item.total > 1
-    ? `${item.done} из ${item.total} сделано`
+    ? markedToday
+      ? "отмечено на сегодня"
+      : `${item.done} из ${item.total} сделано`
     : single
       ? ""
       : "открыть";
@@ -57,9 +61,13 @@ function TodayRow({ item, onToggle, onOpen }: { item: TodayItem; onToggle: () =>
 }
 
 export default function NativeTodayScreen({ onOpenGoal }: { onOpenGoal: (goalId: string) => void }) {
-  const { items, total, done, toggle } = useTodayScreen();
+  const { items, total, done, toggle, date, loadTodayState, todayStreak } = useTodayScreen();
   const [aiOpen, setAiOpen] = useState(false);
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  useEffect(() => {
+    void loadTodayState(date);
+  }, [loadTodayState, date]);
 
   const collections = useAppStore((s) => s.collections);
   const loadCollections = useAppStore((s) => s.loadCollections);
@@ -90,6 +98,15 @@ export default function NativeTodayScreen({ onOpenGoal }: { onOpenGoal: (goalId:
         {total > 0 && (
           <View style={{ height: 6, borderRadius: 3, backgroundColor: appPalette.semantic.borderSubtle, overflow: "hidden", marginTop: 14, marginBottom: 6 }}>
             <View style={{ width: `${pct}%`, height: "100%", borderRadius: 3, backgroundColor: appPalette.brand.primary }} />
+          </View>
+        )}
+
+        {todayStreak > 0 && (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, backgroundColor: appPalette.semantic.warningSurface, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 12 }}>
+            <Flame size={15} color={appPalette.semantic.warningStrong} />
+            <Text style={{ fontSize: 12, fontWeight: "600", color: appPalette.semantic.warningText, fontFamily: "Montserrat", lineHeight: 16 }}>
+              {todayStreak} {todayStreak === 1 ? "день" : "дней"} подряд закрываешь всё на сегодня
+            </Text>
           </View>
         )}
 

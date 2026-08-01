@@ -12,6 +12,7 @@ import { createRewardsSlice } from "@/stores/slices/rewards";
 import { createMissionsSlice } from "@/stores/slices/missions";
 import { createNotesSlice } from "@/stores/slices/notes";
 import { createCollectionsSlice } from "@/stores/slices/collections";
+import { createTodaySlice } from "@/stores/slices/today";
 import type { AppStore } from "@/stores/types";
 
 export const useAppStore = create<AppStore>((set, get) => ({
@@ -27,4 +28,5 @@ export const useAppStore = create<AppStore>((set, get) => ({
   ...createMissionsSlice(set, get, undefined as never),
   ...createNotesSlice(set, get, undefined as never),
   ...createCollectionsSlice(set, get, undefined as never),
+  ...createTodaySlice(set, get, undefined as never),
 }));
