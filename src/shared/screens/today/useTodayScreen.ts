@@ -77,23 +77,19 @@ export function useTodayScreen() {
   const total = items.length;
   const done = items.filter((i) => i.allDone).length;
 
-  // Галочка в «Сегодня» закрывает/открывает цель целиком за период:
-  // если что-то не выполнено - доводим до конца (закрываем невыполненные листовые
-  // задачи), если всё выполнено - снимаем отметки со всех. Работает и для одной
-  // задачи, и для цели с множеством подзадач (в т.ч. еженедельной).
+  // Галочка в «Сегодня» отмечает ОДНУ задачу за тап (одну тренировку из трёх),
+  // а не закрывает цель целиком: берём следующую невыполненную листовую задачу
+  // за период; если все выполнены - снимаем отметку с последней (откат). Так тап
+  // просто «ставит галочку», не уводя в цель и не завершая всё разом.
   const toggle = async (item: TodayItem) => {
     const goal = goals.find((g) => g.id === item.goalId);
     if (!goal || goal.goalType !== "TASK") return;
     const leaves = leafTasks(goal.tasks);
     if (leaves.length === 0) return;
 
-    const incomplete = leaves.filter((t) => !isTaskCompletedThisPeriod(t, goal.goalPeriod));
-    // Целевые id фиксируем снимком до цикла (toggleTask будет подменять цель в сторе).
-    const targetIds = (incomplete.length === 0 ? leaves : incomplete).map((t) => t.id);
-
-    for (const id of targetIds) {
-      await toggleTask(id);
-    }
+    const nextIncomplete = leaves.find((t) => !isTaskCompletedThisPeriod(t, goal.goalPeriod));
+    const target = nextIncomplete ?? leaves[leaves.length - 1];
+    await toggleTask(target.id);
   };
 
   return { items, total, done, toggle };
