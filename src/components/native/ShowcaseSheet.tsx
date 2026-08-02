@@ -5,7 +5,7 @@ import Svg, { Defs, LinearGradient as SvgLinear, Rect, Stop } from "react-native
 
 import { Award, CircleCheck, Crown, Flame, Gift, Share as ShareIcon, Star, Trophy, X, Zap } from "@/components/native/icons";
 import { AvatarStage } from "@/components/native/AvatarStage";
-import { DEFAULT_AVATAR } from "@/data/avatars";
+import { avatarForLevel, nextStage } from "@/data/avatars";
 import { SurfaceCard } from "@/components/native/SurfaceCard";
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
@@ -71,6 +71,8 @@ export function ShowcaseSheet({ open, onOpenChange }: { open: boolean; onOpenCha
 
   if (!user) return null;
 
+  const avatar = avatarForLevel(user.level);
+  const upcoming = nextStage(user.level);
   const publicOn = user.showcasePublic !== false;
   const panelTop = Math.round(height * 0.55);
 
@@ -88,7 +90,7 @@ export function ShowcaseSheet({ open, onOpenChange }: { open: boolean; onOpenCha
   const share = async () => {
     try {
       await Share.share({
-        message: `${user.name} · Уровень ${user.level} · ${DEFAULT_AVATAR.className}\nМоя витрина в Divergent: ${unlocked.length} артефактов, стрик ${longestStreak} дней.`,
+        message: `${user.name} · Уровень ${user.level} · ${avatar.className}\nМоя витрина в Divergent: ${unlocked.length} артефактов, стрик ${longestStreak} дней.`,
       });
     } catch {
       // ignore
@@ -99,7 +101,7 @@ export function ShowcaseSheet({ open, onOpenChange }: { open: boolean; onOpenCha
     <Modal visible={open} animationType="slide" onRequestClose={() => onOpenChange(false)}>
       <View style={{ flex: 1, backgroundColor: "#05070c" }}>
         {/* Аватар во весь экран - фон страницы */}
-        <AvatarStage avatar={DEFAULT_AVATAR} />
+        <AvatarStage avatar={avatar} />
         <Fade position="top" width={width} height={180} />
         <Fade position="bottom" width={width} height={Math.round(height * 0.5)} />
 
@@ -129,11 +131,16 @@ export function ShowcaseSheet({ open, onOpenChange }: { open: boolean; onOpenCha
         {/* Имя/уровень над панелью */}
         <View style={{ position: "absolute", left: 22, right: 22, top: panelTop - 78 }} pointerEvents="none">
           <Text style={{ fontSize: 26, fontWeight: "800", color: "#ffffff", fontFamily: "Montserrat", ...titleShadow }}>{user.name}</Text>
-          <Text style={{ fontSize: 13, color: "#c8d4e8", fontFamily: "Montserrat", marginTop: 2, ...titleShadow }}>Уровень {user.level} · {DEFAULT_AVATAR.className}</Text>
+          <Text style={{ fontSize: 13, color: "#c8d4e8", fontFamily: "Montserrat", marginTop: 2, ...titleShadow }}>Уровень {user.level} · {avatar.className}</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 }}>
             <Flame size={14} color={appPalette.semantic.warningStrong} />
             <Text style={{ fontSize: 12, color: "#f0c07a", fontFamily: "Montserrat", ...titleShadow }}>{longestStreak} дней - лучший стрик · {user.xp} XP</Text>
           </View>
+          {upcoming && (
+            <Text style={{ fontSize: 11, color: "#8fb0ff", fontFamily: "Montserrat", marginTop: 5, ...titleShadow }}>
+              Следующая стадия: {upcoming.name} · с {upcoming.minLevel} ур.
+            </Text>
+          )}
         </View>
 
         {/* Нижняя стеклянная панель */}
