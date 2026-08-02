@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { Modal, ScrollView, Switch, Text, View } from "react-native";
+import { Image, Modal, ScrollView, StyleSheet, Switch, Text, useWindowDimensions, View } from "react-native";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
+import Svg, { Defs, LinearGradient as SvgLinear, Rect, Stop } from "react-native-svg";
 
 import { Award, CircleCheck, Crown, Flame, Gift, Star, Trophy, X, Zap } from "@/components/native/icons";
-import { AvatarHero } from "@/components/native/AvatarHero";
+import { AvatarStage } from "@/components/native/AvatarStage";
+import { AVATARS, DEFAULT_AVATAR } from "@/data/avatars";
+import { avatarAssetUrl } from "@/shared/api/client";
 import { SurfaceCard } from "@/components/native/SurfaceCard";
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
@@ -18,10 +21,34 @@ const rewardIconMap: Record<string, React.ComponentType<{ size?: number; color?:
   zap: Zap,
 };
 
+// Затемняющая вуаль сверху/снизу поверх аватара - для читаемости UI и слияния краёв с фоном.
+function Fade({ position, width, height }: { position: "top" | "bottom"; width: number; height: number }) {
+  const id = `fade-${position}`;
+  const top = position === "top";
+  return (
+    <View pointerEvents="none" style={[{ position: "absolute", left: 0, right: 0, height }, top ? { top: 0 } : { bottom: 0 }]}>
+      <Svg width={width} height={height}>
+        <Defs>
+          <SvgLinear id={id} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#05070c" stopOpacity={top ? 0.9 : 0} />
+            <Stop offset="1" stopColor="#05070c" stopOpacity={top ? 0 : 0.96} />
+          </SvgLinear>
+        </Defs>
+        <Rect width={width} height={height} fill={`url(#${id})`} />
+      </Svg>
+    </View>
+  );
+}
+
+const titleShadow = { textShadowColor: "#000", textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 14 } as const;
+
 export function ShowcaseSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { user, rewards, archivedGoals, loadArchivedGoals, getProgressOverview, updateUser } = useAppStore();
+  const { width, height } = useWindowDimensions();
   const [longestStreak, setLongestStreak] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [activeId, setActiveId] = useState(DEFAULT_AVATAR.id);
+  const active = AVATARS.find((a) => a.id === activeId) ?? DEFAULT_AVATAR;
 
   useEffect(() => {
     if (!open) return;
@@ -49,38 +76,63 @@ export function ShowcaseSheet({ open, onOpenChange }: { open: boolean; onOpenCha
   };
 
   return (
-    <Modal visible={open} transparent animationType="slide" onRequestClose={() => onOpenChange(false)}>
-      <View style={{ flex: 1, backgroundColor: appPalette.surface.overlay, justifyContent: "flex-end" }}>
-        <View style={{ maxHeight: "90%", backgroundColor: appPalette.surface.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat", lineHeight: 24 }}>Витрина</Text>
-            <Pressable onPress={() => onOpenChange(false)} hitSlop={8}><X size={22} color={appPalette.semantic.textMuted} /></Pressable>
+    <Modal visible={open} animationType="slide" onRequestClose={() => onOpenChange(false)}>
+      <View style={{ flex: 1, backgroundColor: "#05070c" }}>
+        {/* Аватар во весь экран - фон страницы */}
+        <AvatarStage key={active.id} avatar={active} />
+        <Fade position="top" width={width} height={180} />
+        <Fade position="bottom" width={width} height={Math.round(height * 0.5)} />
+
+        {/* Закрыть */}
+        <Pressable onPress={() => onOpenChange(false)} hitSlop={10} style={{ position: "absolute", top: 52, right: 18, zIndex: 10 }}>
+          <X size={26} color="#eef2fb" />
+        </Pressable>
+
+        {/* Контент поверх аватара: имя вверху, детали в стеклянной панели снизу */}
+        <ScrollView style={StyleSheet.absoluteFill} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+          {/* область, где виден аватар; имя/уровень внизу неё */}
+          <View style={{ height: Math.round(height * 0.5), justifyContent: "flex-end", paddingHorizontal: 22, paddingBottom: 4 }}>
+            <Text style={{ fontSize: 26, fontWeight: "800", color: "#ffffff", fontFamily: "Montserrat", ...titleShadow }}>{user.name}</Text>
+            <Text style={{ fontSize: 13, color: "#c8d4e8", fontFamily: "Montserrat", marginTop: 2, ...titleShadow }}>
+              Уровень {user.level} · {active.className}
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6 }}>
+              <Flame size={14} color={appPalette.semantic.warningStrong} />
+              <Text style={{ fontSize: 12, color: "#f0c07a", fontFamily: "Montserrat", ...titleShadow }}>{longestStreak} дней - лучший стрик · {user.xp} XP</Text>
+            </View>
           </View>
 
-          <ScrollView contentContainerStyle={{ gap: 16, paddingBottom: 8 }}>
-            <View style={{ alignItems: "center", gap: 6 }}>
-              <AvatarHero level={user.level} />
-              <Text style={{ fontSize: 18, fontWeight: "500", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{user.name}</Text>
-              <Text style={{ fontSize: 12, color: appPalette.semantic.textMuted, fontFamily: "Montserrat" }}>Уровень {user.level} · {user.xp} XP</Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                <Flame size={14} color={appPalette.semantic.warningStrong} />
-                <Text style={{ fontSize: 12, color: appPalette.semantic.warningText, fontFamily: "Montserrat" }}>{longestStreak} дней - лучший стрик</Text>
+          {/* стеклянная панель с деталями */}
+          <View style={{ backgroundColor: "rgba(8,11,18,0.92)", borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 40, gap: 16, minHeight: Math.round(height * 0.5) }}>
+            {/* выбор аватара (коллекция) */}
+            <View style={{ gap: 8 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>Аватар</Text>
+                <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat" }}>Коллекция · {AVATARS.length} / 48</Text>
               </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 2 }}>
+                {AVATARS.map((a) => {
+                  const activeA = a.id === activeId;
+                  return (
+                    <Pressable key={a.id} onPress={() => setActiveId(a.id)} style={{ width: 76, alignItems: "center", gap: 4 }}>
+                      <View style={{ width: 76, height: 100, borderRadius: 14, overflow: "hidden", borderWidth: 2, borderColor: activeA ? a.accent : "transparent", backgroundColor: "#05070c" }}>
+                        <Image source={{ uri: avatarAssetUrl(a.poster) }} resizeMode="cover" style={{ width: "100%", height: "100%" }} />
+                      </View>
+                      <Text numberOfLines={1} style={{ fontSize: 10, color: activeA ? appPalette.semantic.textStrong : appPalette.semantic.textSubtle, fontFamily: "Montserrat" }}>{a.name}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
             </View>
 
+            {/* стата */}
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <View style={{ flex: 1, backgroundColor: appPalette.semantic.neutralSurfaceStrong, borderRadius: 12, padding: 10, alignItems: "center" }}>
-                <Text style={{ fontSize: 18, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{longestStreak}</Text>
-                <Text style={{ fontSize: 10, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat" }}>лучший стрик</Text>
-              </View>
-              <View style={{ flex: 1, backgroundColor: appPalette.semantic.neutralSurfaceStrong, borderRadius: 12, padding: 10, alignItems: "center" }}>
-                <Text style={{ fontSize: 18, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{archivedGoals.length}</Text>
-                <Text style={{ fontSize: 10, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat" }}>целей закрыто</Text>
-              </View>
-              <View style={{ flex: 1, backgroundColor: appPalette.semantic.neutralSurfaceStrong, borderRadius: 12, padding: 10, alignItems: "center" }}>
-                <Text style={{ fontSize: 18, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{unlocked.length}</Text>
-                <Text style={{ fontSize: 10, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat" }}>артефактов</Text>
-              </View>
+              {[{ v: longestStreak, l: "лучший стрик" }, { v: archivedGoals.length, l: "целей закрыто" }, { v: unlocked.length, l: "артефактов" }].map((s, i) => (
+                <View key={i} style={{ flex: 1, backgroundColor: appPalette.semantic.neutralSurfaceStrong, borderRadius: 12, padding: 10, alignItems: "center" }}>
+                  <Text style={{ fontSize: 18, fontWeight: "700", color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{s.v}</Text>
+                  <Text style={{ fontSize: 10, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat" }}>{s.l}</Text>
+                </View>
+              ))}
             </View>
 
             {unlocked.length > 0 && (
@@ -123,8 +175,8 @@ export function ShowcaseSheet({ open, onOpenChange }: { open: boolean; onOpenCha
                 <Switch value={publicOn} onValueChange={togglePrivacy} disabled={busy} />
               </View>
             </SurfaceCard>
-          </ScrollView>
-        </View>
+          </View>
+        </ScrollView>
       </View>
     </Modal>
   );
