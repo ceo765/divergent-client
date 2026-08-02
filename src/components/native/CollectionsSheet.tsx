@@ -34,6 +34,12 @@ const LEADS: { key: ReminderLead; label: string }[] = [
   { key: "eve", label: "накануне" },
 ];
 
+function formatFinished(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${String(d.getFullYear()).slice(2)}`;
+}
+
 function Stars({ value, onSet }: { value: number; onSet: (v: number) => void }) {
   return (
     <View style={{ flexDirection: "row", gap: 2 }}>
@@ -47,7 +53,7 @@ function Stars({ value, onSet }: { value: number; onSet: (v: number) => void }) 
 }
 
 export function CollectionsSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { collections, goals, loadCollections, addCollectionItem, editCollectionItem, removeCollectionItem, sendCollectionToGoal, toggleTask } = useAppStore();
+  const { collections, goals, loadCollections, addCollectionItem, editCollectionItem, removeCollectionItem, sendCollectionToGoal } = useAppStore();
   const [extraCats, setExtraCats] = useState<string[]>([]);
   const [tab, setTab] = useState("Книги");
   const [draft, setDraft] = useState("");
@@ -108,10 +114,11 @@ export function CollectionsSheet({ open, onOpenChange }: { open: boolean; onOpen
     });
   };
 
+  // Отметка «пройдено/прочитано» - это просто запись (дату фиксирует сервер),
+  // задачи цели она НЕ трогает: книга привязана к цели как запись, а не задача.
   const toggleDone = (item: CollectionItem) => {
     const nextDone = item.status !== "done";
     void editCollectionItem(item.id, { status: nextDone ? "done" : "planned" });
-    if (item.taskId) void toggleTask(item.taskId); // синхронно отмечаем в цели
   };
 
   const coachPrompt = () => {
@@ -292,7 +299,10 @@ export function CollectionsSheet({ open, onOpenChange }: { open: boolean; onOpen
                     </View>
                     <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, paddingLeft: 32 }}>
                       {done && <Stars value={item.rating ?? 0} onSet={(v) => void editCollectionItem(item.id, { rating: v || null })} />}
-                      {item.taskId ? (
+                      {done && item.finishedAt && (
+                        <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat" }}>прочитано {formatFinished(item.finishedAt)}</Text>
+                      )}
+                      {item.goalId ? (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                           <Target size={12} color={appPalette.semantic.successStrong} />
                           <Text style={{ fontSize: 11, color: appPalette.semantic.successText, fontFamily: "Montserrat" }}>в цели</Text>

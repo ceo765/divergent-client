@@ -90,6 +90,7 @@ export interface CollectionItem {
   location?: string | null;
   reminderAt?: string | null;
   reminderSentAt?: string | null;
+  finishedAt?: string | null; // когда книга/фильм отмечены прочитано/пройдено
   createdAt: string;
   updatedAt: string;
 }
