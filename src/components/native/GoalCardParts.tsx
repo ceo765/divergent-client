@@ -24,6 +24,7 @@ import {
   Target,
 } from "@/components/native/icons";
 import { getSetHistory } from "@/shared/api/client";
+import { useAppStore } from "@/stores/useAppStore";
 import { formatGoalDate } from "@/shared/display/goals";
 import { isTaskCompletedThisPeriod, sumCompletedTaskXp } from "@/shared/screens/goals/model";
 import type { CategoryType } from "@/shared/domain";
@@ -335,6 +336,44 @@ export function GoalFooter({ goal, reward, cycleLabel }: { goal: Goal; reward?: 
           </SmallPill>
         </View>
       )}
+    </View>
+  );
+}
+
+function fmtFinished(iso: string): string {
+  const d = new Date(iso);
+  const p = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${String(d.getFullYear()).slice(2)}`;
+}
+
+// Книги/фильмы из Коллекций, привязанные к этой цели (напр. книга к цели «Чтение»).
+// Это ЗАПИСЬ на цели («читается такая-то книга»), а не задача.
+export function GoalLinkedItems({ goalId }: { goalId: string }) {
+  const collections = useAppStore((s) => s.collections);
+  const loadCollections = useAppStore((s) => s.loadCollections);
+
+  useEffect(() => {
+    if (collections.length === 0) void loadCollections();
+  }, [collections.length, loadCollections]);
+
+  const items = collections.filter((c) => c.goalId === goalId);
+  if (items.length === 0) return null;
+
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={{ fontSize: 12, fontWeight: "600", color: appPalette.semantic.textMuted, fontFamily: "Montserrat" }}>Из коллекций</Text>
+      {items.map((it) => {
+        const done = it.status === "done";
+        return (
+          <View key={it.id} style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: appPalette.semantic.neutralSurfaceStrong, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 8 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: done ? appPalette.semantic.successStrong : appPalette.brand.primary }} />
+            <Text numberOfLines={1} style={{ flex: 1, fontSize: 12, color: appPalette.semantic.textStrong, fontFamily: "Montserrat" }}>{it.title}</Text>
+            <Text style={{ fontSize: 11, color: appPalette.semantic.textSubtle, fontFamily: "Montserrat" }}>
+              {done ? (it.finishedAt ? `прочитано ${fmtFinished(it.finishedAt)}` : "прочитано") : "читаю"}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 }

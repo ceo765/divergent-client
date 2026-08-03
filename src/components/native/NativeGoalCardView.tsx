@@ -7,6 +7,7 @@ import {
   GoalCardActions,
   GoalCardHeader,
   GoalFooter,
+  GoalLinkedItems,
   GoalNumericProgressInput,
   GoalProgressSection,
   GoalTaskSection,
@@ -110,6 +111,7 @@ export function NativeGoalCardView({ goal, categoryLabel, reward, userTimeZone, 
           </View>
         </View>
         <GoalProgressSection goal={goal} progress={progress} completedTasks={completedTasks} totalTasks={totalTasks} />
+        <GoalLinkedItems goalId={goal.id} />
         {goal.goalType === "PROGRESS" && (
           <GoalNumericProgressInput
             progressDelta={progressDelta}
