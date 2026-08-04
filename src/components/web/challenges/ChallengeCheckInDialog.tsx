@@ -19,23 +19,31 @@ function formatValue(value: number | undefined, unit: string) {
   return `${value.toLocaleString("ru-RU")} ${unit}`.trim();
 }
 
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
 export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
   challenge: Challenge;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const myId = useAppStore((state) => state.user?.id);
   const [plan, setPlan] = useState<ChallengeParticipant | null>(null);
   const [checkIns, setCheckIns] = useState<ChallengeCheckIn[]>([]);
-  const [factValue, setFactValue] = useState("");
-  const [doneToday, setDoneToday] = useState("");
+  const [items, setItems] = useState<string[]>([]); // сделано сегодня (напр. компании)
+  const [newItem, setNewItem] = useState("");
+  const [autoFact, setAutoFact] = useState(true); // факт = число позиций в списке
+  const [factManual, setFactManual] = useState("");
   const [tasksTomorrow, setTasksTomorrow] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const refreshAppData = useAppStore((state) => state.refreshAppData);
   const unit = plan?.unit || challenge.metricUnit || "";
-  const numericFact = Number(factValue);
-  const canSubmit = Number.isFinite(numericFact) && numericFact >= 0 && lines(doneToday).length > 0 && lines(tasksTomorrow).length > 0;
+
+  const numericFact = autoFact ? items.length : (Number(factManual) || 0);
+  const canSubmit = Number.isFinite(numericFact) && numericFact >= 0 && items.length > 0;
 
   useEffect(() => {
     if (!open) return;
@@ -46,18 +54,37 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
       .then(([nextPlan, nextCheckIns]) => {
         if (!active) return;
         setPlan(nextPlan);
-        setFactValue(String(nextPlan.currentValue ?? 0));
         setCheckIns(nextCheckIns);
+        // Догружаем сегодняшний свой отчёт - чтобы добавлять по ходу дня, а не вводить заново.
+        const mine = nextCheckIns.find((c) => c.user?.id === myId && isSameDay(new Date(c.submittedAt), new Date()));
+        if (mine) {
+          setItems(mine.doneToday ?? []);
+          setFactManual(String(mine.factValue ?? 0));
+          setAutoFact((mine.factValue ?? 0) === (mine.doneToday?.length ?? 0));
+          setTasksTomorrow((mine.tasksTomorrow ?? []).join("\n"));
+        } else {
+          setItems([]);
+          setFactManual(String(nextPlan.currentValue ?? 0));
+          setAutoFact(true);
+          setTasksTomorrow("");
+        }
       })
       .catch(() => { if (active) setError("Не удалось загрузить личный план и отчёты."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [challenge.id, open]);
+  }, [challenge.id, open, myId]);
 
   const progress = useMemo(() => {
     if (!plan?.targetValue || plan.targetValue <= 0) return 0;
-    return Math.min(100, Math.round(((Number(factValue) || 0) / plan.targetValue) * 100));
-  }, [factValue, plan?.targetValue]);
+    return Math.min(100, Math.round((numericFact / plan.targetValue) * 100));
+  }, [numericFact, plan?.targetValue]);
+
+  const addItem = () => {
+    const v = newItem.trim();
+    if (!v) return;
+    setItems((current) => [...current, v]);
+    setNewItem("");
+  };
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -66,14 +93,12 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
       setError("");
       const saved = await submitChallengeCheckIn(challenge.id, {
         factValue: numericFact,
-        doneToday: lines(doneToday),
+        doneToday: items,
         tasksTomorrow: lines(tasksTomorrow),
       });
       setCheckIns((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
       setPlan((current) => current ? { ...current, currentValue: numericFact } : current);
       await refreshAppData();
-      setDoneToday("");
-      setTasksTomorrow("");
     } catch (nextError) {
       setError(formatChallengeReportError(nextError));
     } finally {
@@ -96,33 +121,61 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
             <div className="rounded-lg border bg-muted/30 p-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div><p className="text-xs text-muted-foreground">План</p><p className="text-lg font-semibold">{formatValue(plan?.targetValue, unit)}</p></div>
-                <div><p className="text-xs text-muted-foreground">Факт</p><p className="text-lg font-semibold">{formatValue(Number(factValue) || 0, unit)}</p></div>
+                <div><p className="text-xs text-muted-foreground">Факт</p><p className="text-lg font-semibold">{formatValue(numericFact, unit)}</p></div>
                 <div><p className="text-xs text-muted-foreground">Выполнено</p><p className="text-lg font-semibold">{progress}%</p></div>
+              </div>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded bg-background">
+                <div className="h-full rounded bg-primary transition-all" style={{ width: `${progress}%` }} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="checkInFact">Обновите факт</Label>
+              <Label>Сделано сегодня {items.length > 0 && <span className="text-muted-foreground">· {items.length}</span>}</Label>
               <div className="flex items-center gap-2">
-                <Input id="checkInFact" type="number" min="0" value={factValue} onChange={(event) => setFactValue(event.target.value)} />
-                {!!unit && <span className="text-sm text-muted-foreground">{unit}</span>}
+                <Input
+                  value={newItem}
+                  onChange={(event) => setNewItem(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addItem(); } }}
+                  placeholder="Например: компания «SkyHub» — обработана"
+                />
+                <Button type="button" onClick={addItem}>Добавить</Button>
+              </div>
+              <div className="space-y-2">
+                {items.map((text, index) => (
+                  <div key={`${text}-${index}`} className="flex items-center gap-2 rounded-md border bg-muted/20 px-3 py-2">
+                    <span className="flex h-5 w-5 flex-none items-center justify-center rounded bg-emerald-500 text-xs text-white">✓</span>
+                    <span className="flex-1 text-sm">{text}</span>
+                    <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setItems((current) => current.filter((_, i) => i !== index))}>✕</button>
+                  </div>
+                ))}
               </div>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="checkInDone">Сделано сегодня</Label>
-              <Textarea id="checkInDone" value={doneToday} onChange={(event) => setDoneToday(event.target.value)} placeholder="Каждое действие — с новой строки" />
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={autoFact} onChange={(event) => setAutoFact(event.target.checked)} />
+                Считать факт по списку (= {items.length})
+              </label>
+              {!autoFact && (
+                <div className="flex items-center gap-2">
+                  <Input type="number" min="0" value={factManual} onChange={(event) => setFactManual(event.target.value)} />
+                  {!!unit && <span className="text-sm text-muted-foreground">{unit}</span>}
+                </div>
+              )}
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="checkInTomorrow">Задачи на завтра</Label>
+              <Label htmlFor="checkInTomorrow">Задачи на завтра <span className="text-muted-foreground">(необязательно)</span></Label>
               <Textarea id="checkInTomorrow" value={tasksTomorrow} onChange={(event) => setTasksTomorrow(event.target.value)} placeholder="Каждая задача — с новой строки" />
             </div>
+
             {!!error && <p className="text-sm text-destructive">{error}</p>}
             <Button disabled={!canSubmit || submitting} onClick={() => void submit()}>
               {submitting ? "Публикуем…" : "Опубликовать отчёт в группе"}
             </Button>
 
             <div className="space-y-3 border-t pt-4">
-              <h3 className="font-semibold">Отчёты группы</h3>
+              <h3 className="font-semibold">Отчёты группы · по дням</h3>
               {checkIns.length === 0 ? <p className="text-sm text-muted-foreground">Отчётов пока нет.</p> : checkIns.map((item) => (
                 <div key={item.id} className="rounded-lg border p-4 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -133,8 +186,10 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
                     </span>
                   </div>
                   <p><strong>План:</strong> {formatValue(item.planValue, unit)} · <strong>Факт:</strong> {formatValue(item.factValue, unit)}</p>
-                  <div><strong>Сделано сегодня:</strong><ul className="list-disc pl-5">{item.doneToday.map((text) => <li key={text}>{text}</li>)}</ul></div>
-                  <div><strong>Задачи на завтра:</strong><ul className="list-disc pl-5">{item.tasksTomorrow.map((text) => <li key={text}>{text}</li>)}</ul></div>
+                  <div><strong>Сделано:</strong><ul className="list-disc pl-5">{item.doneToday.map((text) => <li key={text}>{text}</li>)}</ul></div>
+                  {item.tasksTomorrow.length > 0 && (
+                    <div><strong>Задачи на завтра:</strong><ul className="list-disc pl-5">{item.tasksTomorrow.map((text) => <li key={text}>{text}</li>)}</ul></div>
+                  )}
                 </div>
               ))}
             </div>
