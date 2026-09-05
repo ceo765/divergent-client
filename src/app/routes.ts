@@ -68,3 +68,8 @@ export function buildProgressPath(params: ProgressRouteParams = {}) {
 export function buildSettingsPath() {
   return "/settings";
 }
+
+// Identity Space - полноэкранная 3D-сцена профиля (/avatar).
+export function buildAvatarPath() {
+  return "/avatar";
+}

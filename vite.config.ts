@@ -47,6 +47,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "react-native": "react-native-web",
       "react-native-svg": "react-native-svg-web",
+      "expo-video": path.resolve(__dirname, "./src/shims/expo-video.ts"),
     },
   },
   optimizeDeps: {
@@ -67,8 +68,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
+        // Боевой веб-бандл - только реальное веб-приложение.
+        // native-preview.html остаётся доступным в dev-сервере (vite dev), но в прод-dist не собирается:
+        // он рендерит нативные компоненты через react-native-web и тянет нативные модули (expo-video,
+        // react-native-svg и т.п.), которые rollup под web не бандлит. Это dev-превью, не прод-страница.
         app: path.resolve(__dirname, "index.html"),
-        nativePreview: path.resolve(__dirname, "native-preview.html"),
       },
     },
   },
