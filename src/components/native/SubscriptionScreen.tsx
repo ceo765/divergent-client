@@ -10,10 +10,12 @@ import type { PaymentMethodType } from "@/types";
 
 const FONT = "Montserrat";
 
-const BENEFITS = [
-  { icon: Swords, text: "Участие во всех челленджах без призового фонда" },
-  { icon: Zap, text: "Групповые чаты, чек-ины, прогресс и XP в челленджах" },
-  { icon: CircleCheck, text: "Отмена в любой момент - доступ до конца оплаченного периода" },
+type IconCmp = React.ComponentType<{ size?: number; color?: string }>;
+
+const BENEFITS: { icon: IconCmp; text: string }[] = [
+  { icon: Swords as IconCmp, text: "Участие во всех челленджах без призового фонда" },
+  { icon: Zap as IconCmp, text: "Групповые чаты, чек-ины, прогресс и XP в челленджах" },
+  { icon: CircleCheck as IconCmp, text: "Отмена в любой момент - доступ до конца оплаченного периода" },
 ];
 
 function formatDate(iso: string): string {
