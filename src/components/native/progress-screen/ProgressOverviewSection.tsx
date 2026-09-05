@@ -175,7 +175,7 @@ function StepsBars({ week }: { week: HealthSummary["weekSteps"] }) {
   );
 }
 
-function ActivityBlock({ health, onConnect, onOpenStats }: { health: useHealthShape; onConnect: () => void; onOpenStats: () => void }) {
+function ActivityBlock({ health, onConnect, onOpenStats }: { health: ReturnType<typeof useHealthShape>; onConnect: () => void; onOpenStats: () => void }) {
   const { summary, available, authorized, loading } = health;
 
   return (

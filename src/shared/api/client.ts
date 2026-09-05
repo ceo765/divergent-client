@@ -28,10 +28,6 @@ import type {
   PersonalChallengeGoalInput,
   MissionKey,
   MissionState,
-  SubscriptionView,
-  SubscriptionPlan,
-  SubscriptionPlans,
-  PaymentMethodType,
 } from "@/types";
 
 const API_TIMEOUT_MS = 15000;
@@ -833,21 +829,10 @@ export async function leaveChallenge(id: string) {
   });
 }
 
-export async function deleteChallenge(id: string) {
-  return fetchJSON(`/api/challenges/${id}`, {
-    method: "DELETE",
-  });
-}
-
-export async function payChallenge(
-  id: string,
-  method: string,
-  returnUrl?: string,
-  methodType?: PaymentMethodType,
-) {
+export async function payChallenge(id: string, method: string, returnUrl?: string) {
   return fetchJSON(`/api/payments/create`, {
     method: "POST",
-    body: JSON.stringify({ challengeId: id, method, returnUrl, methodType }),
+    body: JSON.stringify({ challengeId: id, method, returnUrl }),
   });
 }
 
@@ -855,41 +840,6 @@ export async function fetchPaymentStatus(paymentId: string) {
   return fetchJSON(`/api/payments/${paymentId}/status`, {
     method: "GET",
   });
-}
-
-// --- Подписка ---
-
-export async function fetchSubscriptionPlans(): Promise<SubscriptionPlans> {
-  return fetchJSON(`/api/subscriptions/plans`);
-}
-
-export async function fetchSubscription(): Promise<{ subscription: SubscriptionView | null }> {
-  return fetchJSON(`/api/subscriptions`);
-}
-
-export async function createSubscription(params: {
-  plan: SubscriptionPlan;
-  methodType: PaymentMethodType;
-  returnUrl: string;
-}): Promise<{ subscriptionId: string; paymentId: string; confirmationUrl: string | null }> {
-  return fetchJSON(`/api/subscriptions/create`, {
-    method: "POST",
-    body: JSON.stringify(params),
-  });
-}
-
-export async function cancelSubscription(): Promise<{ subscription: SubscriptionView | null }> {
-  return fetchJSON(`/api/subscriptions/cancel`, { method: "POST" });
-}
-
-export async function resumeSubscription(): Promise<{ subscription: SubscriptionView | null }> {
-  return fetchJSON(`/api/subscriptions/resume`, { method: "POST" });
-}
-
-export async function fetchPaymentMethods(): Promise<{
-  methods: { id: string; title: string; methodType: string | null; cardLast4: string | null; isDefault: boolean }[];
-}> {
-  return fetchJSON(`/api/subscriptions/payment-methods`);
 }
 
 export async function acceptChallenge(id: string) {

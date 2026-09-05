@@ -20,10 +20,8 @@ const ProgressView = lazy(() => import("@/views/web/progress"));
 const RemindersView = lazy(() => import("@/views/web/reminders"));
 const RewardsView = lazy(() => import("@/views/web/rewards"));
 const SettingsView = lazy(() => import("@/views/web/settings"));
-const SubscriptionView = lazy(() => import("@/views/web/subscription"));
 const SupportView = lazy(() => import("@/views/web/support"));
 const MissionsView = lazy(() => import("@/views/web/missions"));
-const IdentitySpaceView = lazy(() => import("@/views/web/avatar"));
 
 function RouteFallback() {
   return <AppLoader />;
@@ -64,13 +62,10 @@ export function renderProductWebRoutes() {
       <Route path="/goals" element={renderProtectedWeb(<GoalsView />)} />
       <Route path="/challenges" element={renderProtectedWeb(<ChallengesView />)} />
       <Route path="/settings" element={renderProtectedWeb(<SettingsView />)} />
-      <Route path="/subscription" element={renderProtectedWeb(<SubscriptionView />)} />
       <Route path="/rewards" element={renderProtectedWeb(<RewardsView />)} />
       <Route path="/reminders" element={renderProtectedWeb(<RemindersView />)} />
       <Route path="/progress" element={renderProtectedWeb(<ProgressView />)} />
       <Route path="/missions" element={renderProtectedWeb(<MissionsView />)} />
-      {/* Identity Space - полноэкранный 3D-роут: защищён, но БЕЗ Layout (шапка/футер), т.к. иммерсивная сцена. */}
-      <Route path="/avatar" element={<ProtectedRoute>{withSuspense(<IdentitySpaceView />)}</ProtectedRoute>} />
     </>
   );
 }

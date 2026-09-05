@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Modal, ScrollView, Share, Switch, Text, useWindowDimensions, View } from "react-native";
+import { Modal, ScrollView, Share, StyleSheet, Switch, Text, useWindowDimensions, View } from "react-native";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 import Svg, { Defs, LinearGradient as SvgLinear, Rect, Stop } from "react-native-svg";
 

@@ -10,10 +10,6 @@ import { formatChallengeReportError } from "@/shared/display/challengeErrors";
 import { useAppStore } from "@/stores/useAppStore";
 import type { Challenge, ChallengeCheckIn, ChallengeParticipant } from "@/types";
 
-type Slot = { name: string; done: boolean };
-
-const MAX_SLOTS = 300;
-
 function lines(value: string) {
   return value.split("\n").map((line) => line.trim()).filter(Boolean);
 }
@@ -27,18 +23,6 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-// Строим ровно столько строк, сколько норма участника (напр. 40 у меня / 30 у друга),
-// и заполняем первые строки уже отмеченными компаниями из сегодняшнего отчёта.
-function buildSlots(target: number, doneNames: string[]): Slot[] {
-  const rows = Math.min(MAX_SLOTS, Math.max(target, doneNames.length, 1));
-  const slots: Slot[] = [];
-  for (let i = 0; i < rows; i += 1) {
-    const name = doneNames[i];
-    slots.push(name ? { name, done: true } : { name: "", done: false });
-  }
-  return slots;
-}
-
 export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
   challenge: Challenge;
   open: boolean;
@@ -47,7 +31,10 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
   const myId = useAppStore((state) => state.user?.id);
   const [plan, setPlan] = useState<ChallengeParticipant | null>(null);
   const [checkIns, setCheckIns] = useState<ChallengeCheckIn[]>([]);
-  const [slots, setSlots] = useState<Slot[]>([]);
+  const [items, setItems] = useState<string[]>([]); // сделано сегодня (напр. компании)
+  const [newItem, setNewItem] = useState("");
+  const [autoFact, setAutoFact] = useState(true); // факт = число позиций в списке
+  const [factManual, setFactManual] = useState("");
   const [tasksTomorrow, setTasksTomorrow] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -55,10 +42,8 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
   const refreshAppData = useAppStore((state) => state.refreshAppData);
   const unit = plan?.unit || challenge.metricUnit || "";
 
-  const target = plan?.targetValue && plan.targetValue > 0 ? plan.targetValue : 0;
-  const doneNames = useMemo(() => slots.filter((s) => s.done && s.name.trim()).map((s) => s.name.trim()), [slots]);
-  const doneCount = doneNames.length;
-  const canSubmit = doneCount > 0;
+  const numericFact = autoFact ? items.length : (Number(factManual) || 0);
+  const canSubmit = Number.isFinite(numericFact) && numericFact >= 0 && items.length > 0;
 
   useEffect(() => {
     if (!open) return;
@@ -70,11 +55,19 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
         if (!active) return;
         setPlan(nextPlan);
         setCheckIns(nextCheckIns);
-        const goal = nextPlan.targetValue && nextPlan.targetValue > 0 ? nextPlan.targetValue : 10;
-        // Догружаем сегодняшний свой отчёт - чтобы дополнять по ходу дня, а не вводить заново.
+        // Догружаем сегодняшний свой отчёт - чтобы добавлять по ходу дня, а не вводить заново.
         const mine = nextCheckIns.find((c) => c.user?.id === myId && isSameDay(new Date(c.submittedAt), new Date()));
-        setSlots(buildSlots(goal, mine?.doneToday ?? []));
-        setTasksTomorrow((mine?.tasksTomorrow ?? []).join("\n"));
+        if (mine) {
+          setItems(mine.doneToday ?? []);
+          setFactManual(String(mine.factValue ?? 0));
+          setAutoFact((mine.factValue ?? 0) === (mine.doneToday?.length ?? 0));
+          setTasksTomorrow((mine.tasksTomorrow ?? []).join("\n"));
+        } else {
+          setItems([]);
+          setFactManual(String(nextPlan.currentValue ?? 0));
+          setAutoFact(true);
+          setTasksTomorrow("");
+        }
       })
       .catch(() => { if (active) setError("Не удалось загрузить личный план и отчёты."); })
       .finally(() => { if (active) setLoading(false); });
@@ -82,21 +75,16 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
   }, [challenge.id, open, myId]);
 
   const progress = useMemo(() => {
-    if (!target) return 0;
-    return Math.min(100, Math.round((doneCount / target) * 100));
-  }, [doneCount, target]);
+    if (!plan?.targetValue || plan.targetValue <= 0) return 0;
+    return Math.min(100, Math.round((numericFact / plan.targetValue) * 100));
+  }, [numericFact, plan?.targetValue]);
 
-  const patchSlot = (index: number, patch: Partial<Slot>) => {
-    setSlots((current) => current.map((slot, i) => {
-      if (i !== index) return slot;
-      const next = { ...slot, ...patch };
-      // Нельзя оставить галочку без названия - гасим её, если имя стёрли.
-      if (!next.name.trim()) next.done = false;
-      return next;
-    }));
+  const addItem = () => {
+    const v = newItem.trim();
+    if (!v) return;
+    setItems((current) => [...current, v]);
+    setNewItem("");
   };
-
-  const addRow = () => setSlots((current) => (current.length >= MAX_SLOTS ? current : [...current, { name: "", done: false }]));
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -104,12 +92,12 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
       setSubmitting(true);
       setError("");
       const saved = await submitChallengeCheckIn(challenge.id, {
-        factValue: doneCount,
-        doneToday: doneNames,
+        factValue: numericFact,
+        doneToday: items,
         tasksTomorrow: lines(tasksTomorrow),
       });
       setCheckIns((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
-      setPlan((current) => current ? { ...current, currentValue: doneCount } : current);
+      setPlan((current) => current ? { ...current, currentValue: numericFact } : current);
       await refreshAppData();
     } catch (nextError) {
       setError(formatChallengeReportError(nextError));
@@ -132,8 +120,8 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
           <div className="space-y-5">
             <div className="rounded-lg border bg-muted/30 p-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div><p className="text-xs text-muted-foreground">План</p><p className="text-lg font-semibold">{formatValue(target || undefined, unit)}</p></div>
-                <div><p className="text-xs text-muted-foreground">Отмечено</p><p className="text-lg font-semibold">{formatValue(doneCount, unit)}</p></div>
+                <div><p className="text-xs text-muted-foreground">План</p><p className="text-lg font-semibold">{formatValue(plan?.targetValue, unit)}</p></div>
+                <div><p className="text-xs text-muted-foreground">Факт</p><p className="text-lg font-semibold">{formatValue(numericFact, unit)}</p></div>
                 <div><p className="text-xs text-muted-foreground">Выполнено</p><p className="text-lg font-semibold">{progress}%</p></div>
               </div>
               <div className="mt-3 h-2 w-full overflow-hidden rounded bg-background">
@@ -142,30 +130,38 @@ export function ChallengeCheckInDialog({ challenge, open, onOpenChange }: {
             </div>
 
             <div className="space-y-2">
-              <Label>Компании · отмечено {doneCount}{target ? ` из ${target}` : ""}</Label>
-              <p className="text-xs text-muted-foreground">Впиши название и поставь галочку. Галочку нельзя поставить без названия.</p>
-              <div className="max-h-[42vh] space-y-2 overflow-y-auto pr-1">
-                {slots.map((slot, index) => (
-                  <div key={index} className={`flex items-center gap-2 rounded-md border px-3 py-2 ${slot.done ? "bg-emerald-500/10 border-emerald-500/40" : "bg-muted/20"}`}>
-                    <span className="w-6 flex-none text-right text-xs text-muted-foreground">{index + 1}</span>
-                    <input
-                      type="checkbox"
-                      checked={slot.done}
-                      disabled={!slot.name.trim()}
-                      onChange={(event) => patchSlot(index, { done: event.target.checked })}
-                      className="h-5 w-5 flex-none accent-emerald-500 disabled:opacity-30"
-                      aria-label={`Отметить компанию №${index + 1}`}
-                    />
-                    <Input
-                      value={slot.name}
-                      onChange={(event) => patchSlot(index, { name: event.target.value })}
-                      placeholder={`Компания №${index + 1}`}
-                      className={`flex-1 ${slot.done ? "line-through" : ""}`}
-                    />
+              <Label>Сделано сегодня {items.length > 0 && <span className="text-muted-foreground">· {items.length}</span>}</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newItem}
+                  onChange={(event) => setNewItem(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addItem(); } }}
+                  placeholder="Например: компания «SkyHub» — обработана"
+                />
+                <Button type="button" onClick={addItem}>Добавить</Button>
+              </div>
+              <div className="space-y-2">
+                {items.map((text, index) => (
+                  <div key={`${text}-${index}`} className="flex items-center gap-2 rounded-md border bg-muted/20 px-3 py-2">
+                    <span className="flex h-5 w-5 flex-none items-center justify-center rounded bg-emerald-500 text-xs text-white">✓</span>
+                    <span className="flex-1 text-sm">{text}</span>
+                    <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setItems((current) => current.filter((_, i) => i !== index))}>✕</button>
                   </div>
                 ))}
               </div>
-              <Button type="button" variant="outline" onClick={addRow} disabled={slots.length >= MAX_SLOTS}>+ ещё строка</Button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={autoFact} onChange={(event) => setAutoFact(event.target.checked)} />
+                Считать факт по списку (= {items.length})
+              </label>
+              {!autoFact && (
+                <div className="flex items-center gap-2">
+                  <Input type="number" min="0" value={factManual} onChange={(event) => setFactManual(event.target.value)} />
+                  {!!unit && <span className="text-sm text-muted-foreground">{unit}</span>}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

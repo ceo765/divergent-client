@@ -18,7 +18,6 @@ export function useChallengesScreen(options: {
     acceptChallenge,
     joinChallengeWithPersonalGoal,
     leaveChallenge,
-    deleteChallenge,
     payChallenge,
     getReports,
     getParticipants,
@@ -85,12 +84,6 @@ export function useChallengesScreen(options: {
 
     setSelectedChallenge(challenge);
     setLeaveDialogOpen(true);
-  };
-
-  // Удаление челленджа создателем. Подтверждение показывается прямо в карточке,
-  // поэтому здесь только сам вызов + обновление списка (внутри store).
-  const removeChallenge = async (id: string) => {
-    await deleteChallenge(id);
   };
 
   const confirmLeaveChallenge = async () => {
@@ -267,7 +260,6 @@ export function useChallengesScreen(options: {
     shareChallenge,
     prepareLeaveChallenge,
     confirmLeaveChallenge,
-    removeChallenge,
     selectChallenge,
     closeAcceptDialog,
     loadParticipantsData,

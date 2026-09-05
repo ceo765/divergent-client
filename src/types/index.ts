@@ -130,7 +130,6 @@ export interface Challenge {
   startsAt?: string;
   endsAt?: string;
   price?: number;
-  prizePool?: boolean;
   participants: ChallengeParticipant[];
   reports: Report[];
 }
@@ -340,29 +339,6 @@ export interface User {
   timeZone: string;
   onboardingState?: OnboardingState | null;
   showcasePublic?: boolean;
-  subscription?: SubscriptionView | null;
-}
-
-export type SubscriptionStatus = "ACTIVE" | "PAST_DUE" | "CANCELED" | "EXPIRED";
-export type SubscriptionPlan = "MONTHLY" | "YEARLY";
-export type PaymentMethodType = "sberbank" | "tinkoff_bank" | "bank_card" | "sbp";
-
-export interface SubscriptionView {
-  status: SubscriptionStatus;
-  plan: SubscriptionPlan;
-  priceRub: number;
-  currentPeriodEnd: string;
-  cancelAtPeriodEnd: boolean;
-  trialEndsAt: string | null;
-  paymentMethodTitle: string | null;
-  hasChallengesAccess: boolean;
-}
-
-export interface SubscriptionPlans {
-  monthly: number;
-  yearly: number;
-  trialDays: number;
-  methods: PaymentMethodType[];
 }
 
 export type PaymentMethod = "YOUKASSA";

@@ -7,34 +7,8 @@ import {
   ChallengesScreenHeader,
 } from "@/components/web/challenges-screen/Sections";
 import { useChallengesScreen } from "@/shared/screens/challenges/useChallengesScreen";
-import { useAppStore } from "@/stores/useAppStore";
-import WebSubscriptionScreen from "@/components/web/SubscriptionScreen";
 
 export default function ChallengesScreen() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const hasChallengesAccess = useAppStore((s) => s.user?.subscription?.hasChallengesAccess ?? false);
-
-  if (!hasChallengesAccess) {
-    const paymentId = searchParams.get("paymentId");
-    return (
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2">
-        <WebSubscriptionScreen
-          intent="paywall"
-          paymentId={paymentId}
-          onConsumePayment={() => {
-            const next = new URLSearchParams(searchParams);
-            next.delete("paymentId");
-            setSearchParams(next, { replace: true });
-          }}
-        />
-      </div>
-    );
-  }
-
-  return <ChallengesScreenInner />;
-}
-
-function ChallengesScreenInner() {
   const [searchParams] = useSearchParams();
   const focusId = searchParams.get("id");
   const paymentId = searchParams.get("paymentId");
@@ -63,7 +37,6 @@ function ChallengesScreenInner() {
     shareChallenge,
     prepareLeaveChallenge,
     confirmLeaveChallenge,
-    removeChallenge,
     closeAcceptDialog,
     selectChallenge,
     openParticipants,
@@ -110,7 +83,6 @@ function ChallengesScreenInner() {
           onShare={shareChallenge}
           onSelect={selectChallenge}
           onLeave={prepareLeaveChallenge}
-          onDelete={removeChallenge}
           onOpenLink={openChallengeLink}
           onOpenParticipants={openParticipants}
           onAccept={acceptSelectedChallenge}
