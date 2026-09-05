@@ -17,6 +17,9 @@ import type {
   Note,
   CollectionItem,
   PaymentMethod,
+  PaymentMethodType,
+  SubscriptionPlan,
+  SubscriptionPlans,
   OnboardingStepKey,
   Reminder,
   Report,
@@ -62,6 +65,7 @@ export interface AppStoreState {
   } | null;
   missionState: MissionState | null;
   missionsLoading: boolean;
+  subscriptionPlans: SubscriptionPlans | null;
 }
 
 export interface AuthSlice {
@@ -93,8 +97,14 @@ export interface AppStoreActions {
   acceptChallenge: (challenge: Challenge) => Promise<void>;
   joinChallengeWithPersonalGoal: (challenge: Challenge, goal: PersonalChallengeGoalInput) => Promise<void>;
   leaveChallenge: (id: string) => Promise<void>;
-  payChallenge: (challenge: Challenge, method: PaymentMethod) => Promise<void>;
+  deleteChallenge: (id: string) => Promise<void>;
+  payChallenge: (challenge: Challenge, method: PaymentMethod, methodType?: PaymentMethodType) => Promise<void>;
   syncPaymentStatus: (paymentId: string) => Promise<"PENDING" | "SUCCESS" | "FAILED" | "CANCELLED">;
+  loadSubscriptionPlans: () => Promise<void>;
+  startSubscriptionCheckout: (plan: SubscriptionPlan, methodType: PaymentMethodType) => Promise<string | null>;
+  refreshSubscription: () => Promise<void>;
+  cancelSubscription: () => Promise<void>;
+  resumeSubscription: () => Promise<void>;
   addCategory: (category: CategoryOption) => void;
   addGoal: (goal: Goal) => Promise<void>;
   deleteGoal: (goal: Goal) => Promise<void>;

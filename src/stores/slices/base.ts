@@ -21,4 +21,5 @@ export const createBaseSlice: StoreSlice<AppStoreState> = () => ({
   nativeToast: null,
   missionState: null,
   missionsLoading: false,
+  subscriptionPlans: null,
 });

@@ -29,6 +29,7 @@ export function ChallengesScreenContent({
   onShare,
   onSelect,
   onLeave,
+  onDelete,
   onOpenLink,
   onOpenParticipants,
   onAccept,
@@ -42,6 +43,7 @@ export function ChallengesScreenContent({
   onShare: (id: string) => void;
   onSelect: (challenge: Challenge) => void;
   onLeave: (id: string) => void;
+  onDelete: (id: string) => Promise<void> | void;
   onOpenLink: (id: string) => void;
   onOpenParticipants: (id: string) => Promise<boolean>;
   onAccept: (id: string) => Promise<{ status: "accepted" | "payment_required" | "ignored" }>;
@@ -75,6 +77,7 @@ export function ChallengesScreenContent({
           onShare={onShare}
           onSelect={onSelect}
           onLeave={onLeave}
+          onDelete={onDelete}
           onOpenLink={onOpenLink}
           onOpenParticipants={onOpenParticipants}
           onAccept={onAccept}
