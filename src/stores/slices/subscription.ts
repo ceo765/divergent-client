@@ -3,7 +3,7 @@ import { buildChallengesPath } from "@/app/routes";
 import { buildPaymentReturnUrl } from "@/platform/appUrl";
 import { redirectToUrl } from "@/platform/browser";
 import type { AppStoreActions, StoreSlice } from "@/stores/types";
-import type { PaymentMethodType, SubscriptionPlan } from "@/types";
+import type { SubscriptionPlan } from "@/types";
 
 type SubscriptionSlice = Pick<
   AppStoreActions,
@@ -12,6 +12,7 @@ type SubscriptionSlice = Pick<
   | "refreshSubscription"
   | "cancelSubscription"
   | "resumeSubscription"
+  | "detachPaymentMethod"
 >;
 
 export const createSubscriptionSlice: StoreSlice<SubscriptionSlice> = (set, get) => ({
@@ -25,12 +26,11 @@ export const createSubscriptionSlice: StoreSlice<SubscriptionSlice> = (set, get)
 
   // Возвращает confirmationUrl первого платежа (экран сам открывает редирект),
   // либо null. Активацию подписки проставит вебхук / poll при возврате.
-  startSubscriptionCheckout: async (plan: SubscriptionPlan, methodType: PaymentMethodType) => {
+  startSubscriptionCheckout: async (plan: SubscriptionPlan) => {
     set({ loading: true });
     try {
       const res = await api.createSubscription({
         plan,
-        methodType,
         returnUrl: buildPaymentReturnUrl(buildChallengesPath()),
       });
       if (res.confirmationUrl) {
@@ -73,6 +73,20 @@ export const createSubscriptionSlice: StoreSlice<SubscriptionSlice> = (set, get)
     set({ loading: true });
     try {
       const { subscription } = await api.resumeSubscription();
+      const user = get().user;
+      if (user) set({ user: { ...user, subscription } });
+    } catch (err) {
+      console.error(err);
+      throw err;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  detachPaymentMethod: async (id: string) => {
+    set({ loading: true });
+    try {
+      const { subscription } = await api.detachPaymentMethod(id);
       const user = get().user;
       if (user) set({ user: { ...user, subscription } });
     } catch (err) {

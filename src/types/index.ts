@@ -356,13 +356,22 @@ export interface SubscriptionView {
   trialEndsAt: string | null;
   paymentMethodTitle: string | null;
   hasChallengesAccess: boolean;
+  autoRenew: boolean;
 }
 
 export interface SubscriptionPlans {
   monthly: number;
   yearly: number;
   trialDays: number;
-  methods: PaymentMethodType[];
+  autoRenew: boolean;
+}
+
+export interface SavedPaymentMethodView {
+  id: string;
+  title: string;
+  methodType: string | null;
+  cardLast4: string | null;
+  isDefault: boolean;
 }
 
 export type PaymentMethod = "YOUKASSA";
