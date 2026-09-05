@@ -31,6 +31,7 @@ import type {
   SubscriptionView,
   SubscriptionPlan,
   SubscriptionPlans,
+  SavedPaymentMethodView,
   PaymentMethodType,
 } from "@/types";
 
@@ -869,7 +870,6 @@ export async function fetchSubscription(): Promise<{ subscription: SubscriptionV
 
 export async function createSubscription(params: {
   plan: SubscriptionPlan;
-  methodType: PaymentMethodType;
   returnUrl: string;
 }): Promise<{ subscriptionId: string; paymentId: string; confirmationUrl: string | null }> {
   return fetchJSON(`/api/subscriptions/create`, {
@@ -886,10 +886,14 @@ export async function resumeSubscription(): Promise<{ subscription: Subscription
   return fetchJSON(`/api/subscriptions/resume`, { method: "POST" });
 }
 
-export async function fetchPaymentMethods(): Promise<{
-  methods: { id: string; title: string; methodType: string | null; cardLast4: string | null; isDefault: boolean }[];
-}> {
+export async function fetchPaymentMethods(): Promise<{ methods: SavedPaymentMethodView[] }> {
   return fetchJSON(`/api/subscriptions/payment-methods`);
+}
+
+export async function detachPaymentMethod(
+  id: string,
+): Promise<{ ok: true; subscription: SubscriptionView | null }> {
+  return fetchJSON(`/api/subscriptions/payment-methods/${id}`, { method: "DELETE" });
 }
 
 export async function acceptChallenge(id: string) {

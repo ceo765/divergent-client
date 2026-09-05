@@ -101,10 +101,11 @@ export interface AppStoreActions {
   payChallenge: (challenge: Challenge, method: PaymentMethod, methodType?: PaymentMethodType) => Promise<void>;
   syncPaymentStatus: (paymentId: string) => Promise<"PENDING" | "SUCCESS" | "FAILED" | "CANCELLED">;
   loadSubscriptionPlans: () => Promise<void>;
-  startSubscriptionCheckout: (plan: SubscriptionPlan, methodType: PaymentMethodType) => Promise<string | null>;
+  startSubscriptionCheckout: (plan: SubscriptionPlan) => Promise<string | null>;
   refreshSubscription: () => Promise<void>;
   cancelSubscription: () => Promise<void>;
   resumeSubscription: () => Promise<void>;
+  detachPaymentMethod: (id: string) => Promise<void>;
   addCategory: (category: CategoryOption) => void;
   addGoal: (goal: Goal) => Promise<void>;
   deleteGoal: (goal: Goal) => Promise<void>;
