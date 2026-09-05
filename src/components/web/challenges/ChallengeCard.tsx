@@ -1,6 +1,16 @@
 ﻿import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Edit, Share, ChevronUp, ChevronDown, DoorOpen, Swords } from "lucide-react";
+import { Calendar, Users, Edit, Share, ChevronUp, ChevronDown, DoorOpen, Swords, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Challenge, Leader } from "@/types";
 import { ProgressRing } from "@/components/shared/ProgressRing";
 import { Button } from "@/components/ui/button.tsx";
@@ -17,6 +27,7 @@ import {
   goalCompleted,
 } from "@/shared/display/challenges";
 import { useAppStore } from "@/stores/useAppStore.ts";
+import { ChallengeReportPanel } from "@/components/web/challenges/ChallengeReportPanel";
 import { MouseEvent as ReactMouseEvent } from "react";
 
 interface Props {
@@ -31,6 +42,7 @@ interface Props {
   onSelect?: (challenge: Challenge) => void;
   onReport?: (id: string) => void;
   onChat?: (id: string) => void;
+  onDelete?: (id: string) => Promise<void> | void;
 }
 
 export function ChallengeCard({
@@ -43,12 +55,14 @@ export function ChallengeCard({
   onOpenLink,
   onOpenParticipants,
   onSelect,
-  onReport,
   onChat,
+  onDelete,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const [isGoalsOpen, setIsGoalsOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<Leader[]>([]);
@@ -140,6 +154,16 @@ export function ChallengeCard({
                   <Edit className="size-4" />
                 </Button>
               )}
+              {onDelete && isCreator && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive"
+                  onClick={(e) => (e.stopPropagation(), setConfirmDeleteOpen(true))}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
               {onShare && (
                 <Button variant="ghost" size="icon" onClick={(e) => (e.stopPropagation(), onShare(challenge.id))}>
                   <Share className="size-4" />
@@ -166,6 +190,20 @@ export function ChallengeCard({
             </div>
             <Progress value={progress * 100} className="h-2" />
           </div>
+        )}
+
+        {isParticipant && challenge.personalGoalsEnabled && (
+          <Collapsible open={isReportOpen} onOpenChange={setIsReportOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="transparent" className="w-full justify-between" onClick={(e) => e.stopPropagation()}>
+                <span>Мои компании</span>
+                {isReportOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="my-2" onClick={(e) => e.stopPropagation()}>
+              <ChallengeReportPanel challenge={challenge} />
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {isParticipant && participant && participant.missCount > 0 && (
@@ -274,11 +312,6 @@ export function ChallengeCard({
               </Button>
             </div>
           )}
-          {onReport && isParticipant && challenge.personalGoalsEnabled && (
-            <div className="flex justify-center py-2">
-              <Button onClick={(event) => (event.stopPropagation(), onReport(challenge.id))}>Сдать отчёт</Button>
-            </div>
-          )}
           {onChat && (isParticipant || isCreator) && (
             <div className="flex justify-center py-2">
               <Button variant="outline" onClick={(event) => (event.stopPropagation(), onChat(challenge.id))}>Общий чат</Button>
@@ -315,6 +348,31 @@ export function ChallengeCard({
           </div>
         </div>
       </CardContent>
+
+      {onDelete && isCreator && (
+        <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить челлендж?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Челлендж «{challenge.title}» будет удалён и исчезнет у всех участников. Это действие нельзя отменить.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  await onDelete(challenge.id);
+                  setConfirmDeleteOpen(false);
+                }}
+                className="bg-destructive text-white hover:bg-destructive/90"
+              >
+                Удалить
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Card>
   );
 }

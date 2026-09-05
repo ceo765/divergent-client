@@ -14,6 +14,7 @@ type ChallengesSlice = Pick<
   | "acceptChallenge"
   | "joinChallengeWithPersonalGoal"
   | "leaveChallenge"
+  | "deleteChallenge"
   | "payChallenge"
   | "syncPaymentStatus"
   | "getReports"
@@ -99,6 +100,18 @@ export const createChallengesSlice: StoreSlice<ChallengesSlice> = (set, get) => 
     set({ loading: true });
     try {
       await api.leaveChallenge(id);
+      await get().initialize();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  deleteChallenge: async (id) => {
+    set({ loading: true });
+    try {
+      await api.deleteChallenge(id);
       await get().initialize();
     } catch (err) {
       console.error(err);

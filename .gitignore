@@ -29,3 +29,6 @@ dist-ssr
 localhost+2.pem
 localhost+2-key.pem
 *.p8
+
+# TS incremental build info
+*.tsbuildinfo

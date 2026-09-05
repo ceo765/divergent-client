@@ -1,16 +1,17 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Linking, SafeAreaView, Text, View } from "react-native";
+import { Linking, Modal, SafeAreaView, Text, View } from "react-native";
 import { HapticPressable as Pressable } from "@/components/native/HapticPressable";
 
 import { NativeNavigationProvider } from "@/app/native/NativeNavigation";
 import { parseNativeAppRoute, type NativeAppTab } from "@/app/router.native";
 import { NativeAppHeader } from "@/components/native/NativeAppHeader";
 import { ShowcaseSheet } from "@/components/native/ShowcaseSheet";
+import { SubscriptionScreen } from "@/components/native/SubscriptionScreen";
 import { CollectionsSheet } from "@/components/native/CollectionsSheet";
 import { MissionRewardModal } from "@/components/native/MissionRewardModal";
 import { MissionIntroModal } from "@/components/native/MissionIntroModal";
-import { BarChart2, Bell, Gift, Home, Swords, Target } from "@/components/native/icons";
+import { BarChart2, Gift, Home, Swords, Target } from "@/components/native/icons";
 import { AppLoader } from "@/components/shared/AppLoader";
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
@@ -91,6 +92,7 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
   const [activeTab, setActiveTab] = useState<NativeAppTab>("today");
   const [showcaseOpen, setShowcaseOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const [subscriptionOpen, setSubscriptionOpen] = useState(false);
   const [goalLinkState, setGoalLinkState] = useState<{
     goalId?: string | null;
     reportTaskId?: string | null;
@@ -245,15 +247,24 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
                 }}
               />
             )}
-            {activeTab === "challenges" && (
-              <NativeChallengesScreen
-                focusId={challengeLinkState.focusId}
-                paymentId={challengeLinkState.paymentId}
-                onConsumeLinkState={() => {
-                  setChallengeLinkState({});
-                }}
-              />
-            )}
+            {activeTab === "challenges" &&
+              (user?.subscription?.hasChallengesAccess ? (
+                <NativeChallengesScreen
+                  focusId={challengeLinkState.focusId}
+                  paymentId={challengeLinkState.paymentId}
+                  onConsumeLinkState={() => {
+                    setChallengeLinkState({});
+                  }}
+                />
+              ) : (
+                <SubscriptionScreen
+                  intent="paywall"
+                  paymentId={challengeLinkState.paymentId}
+                  onConsumePayment={() => {
+                    setChallengeLinkState({});
+                  }}
+                />
+              ))}
             {activeTab === "rewards" && (
               <NativeRewardsScreen
                 rewardId={rewardLinkState.rewardId}
@@ -270,7 +281,12 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
                 }}
               />
             )}
-            {activeTab === "settings" && <NativeSettingsScreen onOpenReminders={() => setActiveTab("reminders")} />}
+            {activeTab === "settings" && (
+              <NativeSettingsScreen
+                onOpenReminders={() => setActiveTab("reminders")}
+                onOpenSubscription={() => setSubscriptionOpen(true)}
+              />
+            )}
             {activeTab === "missions" && <NativeMissionsScreen />}
           </Suspense>
         </View>
@@ -331,6 +347,18 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
         <MissionRewardModal />
         <ShowcaseSheet open={showcaseOpen} onOpenChange={setShowcaseOpen} />
         <CollectionsSheet open={collectionsOpen} onOpenChange={setCollectionsOpen} />
+        <Modal visible={subscriptionOpen} animationType="slide" onRequestClose={() => setSubscriptionOpen(false)}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: appPalette.surface.background }}>
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", padding: 12 }}>
+              <Pressable onPress={() => setSubscriptionOpen(false)} hitSlop={10}>
+                <Text style={{ fontSize: 15, color: appPalette.brand.primary, fontFamily: "Montserrat", fontWeight: "600" }}>
+                  Закрыть
+                </Text>
+              </Pressable>
+            </View>
+            <SubscriptionScreen intent="manage" />
+          </SafeAreaView>
+        </Modal>
       </SafeAreaView>
     </NativeNavigationProvider>
   );
