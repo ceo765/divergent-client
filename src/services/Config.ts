@@ -74,6 +74,11 @@ function resolveRuntimeEnv() {
     return "development";
   }
 
+  // Staging - отдельный домен и API, чтобы не задеть боевую базу (docs/STAGING-TESTFLIGHT.md).
+  if (hostname === "staging.divergentclub.ru" || hostname.startsWith("staging.")) {
+    return "staging";
+  }
+
   return "production";
 }
 
