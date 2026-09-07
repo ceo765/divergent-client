@@ -13,6 +13,7 @@ import { MissionRewardModal } from "@/components/native/MissionRewardModal";
 import { MissionIntroModal } from "@/components/native/MissionIntroModal";
 import { BarChart2, Gift, Home, Swords, Target } from "@/components/native/icons";
 import { AppLoader } from "@/components/shared/AppLoader";
+import { consumePendingInviteChallengeId } from "@/platform/pendingInvite";
 import { useAppStore } from "@/stores/useAppStore";
 import { appPalette } from "@/theme/palette";
 
@@ -212,6 +213,17 @@ export default function NativeAppShell({ mode = "standalone" }: { mode?: "previe
       subscription.remove();
     };
   }, [applyLink]);
+
+  // Отложенный deep link: юзер поставил приложение по ссылке-приглашению на
+  // челлендж (страница /j/<id> положила id в буфер обмена) - заводим сразу туда.
+  useEffect(() => {
+    if (!user) return;
+    void consumePendingInviteChallengeId().then((challengeId) => {
+      if (!challengeId) return;
+      setChallengeLinkState({ focusId: challengeId });
+      setActiveTab("challenges");
+    });
+  }, [user]);
 
   return (
     <NativeNavigationProvider value={navigationValue}>
