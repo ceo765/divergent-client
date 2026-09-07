@@ -1,5 +1,7 @@
 ﻿import { type ChangeEvent, type FormEvent, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Crown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +12,7 @@ import TimezoneSelector from "./TimezoneSelector";
 
 export default function Settings() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { signOut, deleteAccount, setCredentials, user } = useAppStore();
   const [formData, setFormData] = useState({
     email: user?.email || "",
@@ -93,6 +96,22 @@ export default function Settings() {
 
   return (
     <div className="flex flex-col justify-center gap-4 py-2">
+      <Card
+        className="cursor-pointer border-border/80 bg-card/95 transition hover:bg-muted"
+        onClick={() => navigate("/subscription")}
+      >
+        <CardContent className="flex items-center gap-3 py-4">
+          <Crown className="text-primary" size={20} />
+          <div className="flex-1">
+            <div className="font-medium">Divergent Premium</div>
+            <div className="text-sm text-muted-foreground">
+              {user.subscription?.hasChallengesAccess ? "Подписка активна" : "Оформить подписку"}
+            </div>
+          </div>
+          <span className="text-muted-foreground">›</span>
+        </CardContent>
+      </Card>
+
       <Card className="border-border/80 bg-card/95">
         <CardHeader>
           <CardTitle>{t("settings.title")}</CardTitle>
