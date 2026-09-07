@@ -1,0 +1,13 @@
+{
+    "app": {
+        "publicURL": "https://staging.divergentclub.ru"
+    },
+    "api": {
+        "http": {
+            "baseURL": "https://api-staging.divergentclub.ru"
+        },
+        "telegram": {
+            "twaURL": "https://t.me/divergent_app_test_bot/start"
+        }
+    }
+}
