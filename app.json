@@ -23,6 +23,9 @@
     },
     "ios": {
       "bundleIdentifier": "com.spritemedia.divergent",
+      "associatedDomains": [
+        "applinks:divergentclub.ru"
+      ],
       "entitlements": {
         "aps-environment": "production"
       },
