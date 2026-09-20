@@ -51,6 +51,7 @@ export interface Goal {
   taskXpTarget?: number;
   goalType: GoalType;
   isWorkout?: boolean;
+  isNutrition?: boolean;
   goalPeriod: GoalPeriod;
   challengeId?: string;
   challenge?: Challenge;
@@ -471,3 +472,34 @@ export type AIChatResponse = {
   goalDraft: Draft | null;
   isDraftAdded: boolean;
 };
+
+export interface NutritionItem {
+  name: string;
+  grams: number;
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+}
+
+export interface NutritionAnalysis {
+  title: string;
+  items: NutritionItem[];
+  note: string | null;
+}
+
+export interface MealEntryView {
+  id: string;
+  title: string;
+  eatenAt: string;
+  items: NutritionItem[];
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+}
+
+export interface MealsDay {
+  meals: MealEntryView[];
+  totals: { calories: number; protein: number; fat: number; carbs: number };
+}

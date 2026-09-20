@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 
 import { ProgressRing } from "@/components/shared/ProgressRing";
 import {
@@ -12,10 +12,13 @@ import {
   GoalProgressSection,
   GoalTaskSection,
 } from "@/components/native/GoalCardParts";
+import { NutritionSheet, todayRange } from "@/components/native/NutritionSheet";
+import { ActionChip } from "@/components/native/ActionChip";
 import { SurfaceCard } from "@/components/native/SurfaceCard";
+import { fetchMeals } from "@/shared/api/client";
 import { isTaskCompletedThisPeriod, sumCompletedTaskXp } from "@/shared/screens/goals/model";
 import { appPalette } from "@/theme/palette";
-import type { Goal, GoalPeriod, Reward, Task } from "@/types";
+import type { Goal, GoalPeriod, MealsDay, Reward, Task } from "@/types";
 
 function countTasks(tasks?: Task[]): number {
   if (!tasks || tasks.length === 0) return 0;
@@ -54,6 +57,8 @@ export function NativeGoalCardView({ goal, categoryLabel, reward, userTimeZone, 
   const [isOpen, setIsOpen] = useState(autoExpand);
   const [progressDelta, setProgressDelta] = useState("");
   const [highlight, setHighlight] = useState(focused);
+  const [nutritionOpen, setNutritionOpen] = useState(false);
+  const [nutritionDay, setNutritionDay] = useState<MealsDay | null>(null);
 
   const safeTasks = goal.tasks ?? [];
   const totalTasks = countTasks(safeTasks);
@@ -73,6 +78,11 @@ export function NativeGoalCardView({ goal, categoryLabel, reward, userTimeZone, 
       ? (completedTasks / totalTasks) * 100
       : 0;
 
+  const isNutrition = Boolean(goal.isNutrition);
+  const nutritionTarget = goal.targetValue ?? 0;
+  const nutritionEaten = nutritionDay?.totals.calories ?? 0;
+  const ringProgress = isNutrition ? (nutritionTarget > 0 ? Math.min((nutritionEaten / nutritionTarget) * 100, 100) : 0) : progress;
+
   const status = getGoalStatus(goal);
   const statusLabel = status === "COMPLETED" ? t("goals.task_status_completed") : status === "FAILED" ? t("goals.task_status_failed") : null;
   const challengeStarted = goal.challenge?.startsAt ? hasChallengeStartedForUser(new Date(goal.challenge.startsAt), userTimeZone) : true;
@@ -91,6 +101,12 @@ export function NativeGoalCardView({ goal, categoryLabel, reward, userTimeZone, 
   }, [autoExpand]);
 
   useEffect(() => {
+    if (!isNutrition) return;
+    const { from, to } = todayRange();
+    void fetchMeals(goal.id, from, to).then(setNutritionDay).catch(() => undefined);
+  }, [goal.id, isNutrition]);
+
+  useEffect(() => {
     if (!focused) {
       return;
     }
@@ -106,13 +122,22 @@ export function NativeGoalCardView({ goal, categoryLabel, reward, userTimeZone, 
         <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
           <GoalCardHeader goal={goal} categoryLabel={categoryLabel} statusLabel={statusLabel} />
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flexShrink: 0 }}>
-            <ProgressRing progress={progress} size={70} strokeWidth={6} />
+            <ProgressRing progress={ringProgress} size={70} strokeWidth={6} />
             <GoalCardActions goal={goal} onEdit={onEdit} onAddReminder={onAddReminder} onGoToProgress={onGoToProgress} />
           </View>
         </View>
         <GoalProgressSection goal={goal} progress={progress} completedTasks={completedTasks} totalTasks={totalTasks} />
         <GoalLinkedItems goalId={goal.id} />
-        {goal.goalType === "PROGRESS" && (
+        {isNutrition && (
+          <View style={{ gap: 8 }}>
+            <Text style={{ color: appPalette.semantic.textStrong, fontSize: 14, fontWeight: "600", fontFamily: "Montserrat" }}>
+              Сегодня: {nutritionEaten}{nutritionTarget > 0 ? ` из ${nutritionTarget}` : ""} ккал
+            </Text>
+            <ActionChip tone="primary" onPress={() => setNutritionOpen(true)}>Добавить еду по фото</ActionChip>
+            <NutritionSheet goal={goal} open={nutritionOpen} onOpenChange={setNutritionOpen} onChanged={setNutritionDay} />
+          </View>
+        )}
+        {goal.goalType === "PROGRESS" && !isNutrition && (
           <GoalNumericProgressInput
             progressDelta={progressDelta}
             onChangeProgressDelta={setProgressDelta}

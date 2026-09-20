@@ -29,6 +29,10 @@ import type {
   MissionKey,
   MissionState,
   SubscriptionView,
+  MealEntryView,
+  MealsDay,
+  NutritionAnalysis,
+  NutritionItem,
   SubscriptionPlan,
   SubscriptionPlans,
   SavedPaymentMethodView,
@@ -978,4 +982,21 @@ export async function createFriend(friend: FriendInput): Promise<FriendSummary> 
 
 export async function fetchCategories(): Promise<{ value: string; label: string }[]> {
   return fetchJSON("/api/categories");
+}
+
+export async function analyzeMealPhoto(input: { goalId: string; imageBase64: string; mimeType: string; hint?: string }): Promise<NutritionAnalysis> {
+  return fetchJSON("/api/nutrition/analyze", { method: "POST", body: JSON.stringify(input) });
+}
+
+export async function saveMeal(input: { goalId: string; title: string; items: NutritionItem[]; eatenAt?: string }): Promise<MealEntryView> {
+  return fetchJSON("/api/nutrition/meals", { method: "POST", body: JSON.stringify(input) });
+}
+
+export async function fetchMeals(goalId: string, from: Date, to: Date): Promise<MealsDay> {
+  const query = new URLSearchParams({ goalId, from: from.toISOString(), to: to.toISOString() });
+  return fetchJSON(`/api/nutrition/meals?${query.toString()}`);
+}
+
+export async function deleteMeal(id: string) {
+  return fetchJSON(`/api/nutrition/meals/${id}`, { method: "DELETE" });
 }
