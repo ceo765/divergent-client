@@ -440,6 +440,20 @@ export function WorkoutToggleSection(props: { value: boolean; onChange: (value: 
   );
 }
 
+export function NutritionToggleSection(props: { value: boolean; onChange: (value: boolean) => void }) {
+  return (
+    <Pressable onPress={() => props.onChange(!props.value)} style={{ flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderColor: props.value ? appPalette.brand.primary : appPalette.semantic.borderSubtle, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, backgroundColor: props.value ? appPalette.semantic.infoSurface : appPalette.semantic.neutralSurfaceStrong }}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={{ color: appPalette.semantic.textStrong, fontSize: 13, fontWeight: "500", fontFamily: "Montserrat" }}>Питание (калории по фото)</Text>
+        <Text style={{ color: appPalette.semantic.textMuted, fontSize: 11, fontFamily: "Montserrat" }}>Цель - ккал в день. Внутри цели можно фотографировать еду</Text>
+      </View>
+      <View style={{ width: 44, height: 26, borderRadius: 13, backgroundColor: props.value ? appPalette.brand.primary : appPalette.semantic.borderSubtle, justifyContent: "center", paddingHorizontal: 3 }}>
+        <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: appPalette.surface.background, alignSelf: props.value ? "flex-end" : "flex-start" }} />
+      </View>
+    </Pressable>
+  );
+}
+
 export function GoalPeriodSection(props: { goalPeriod: GoalPeriod; onChange: (value: GoalPeriod) => void }) {
   const { t } = useTranslation();
 

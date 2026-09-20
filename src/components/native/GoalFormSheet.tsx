@@ -12,6 +12,7 @@ import {
   GoalPeriodSection,
   GoalTypeSection,
   WorkoutToggleSection,
+  NutritionToggleSection,
   ProgressFieldsSection,
   RewardSection,
   TaskXpTargetSection,
@@ -79,6 +80,7 @@ export function GoalFormSheet({
   const [category, setCategory] = useState(categories[0]?.value ?? "personal");
   const [goalType, setGoalType] = useState<GoalType>("TASK");
   const [isWorkout, setIsWorkout] = useState(false);
+  const [isNutrition, setIsNutrition] = useState(false);
   const [healthActivity, setHealthActivity] = useState<string | null>(null);
   const [healthMinKm, setHealthMinKm] = useState("");
   const [goalPeriod, setGoalPeriod] = useState<GoalPeriod>("NONE");
@@ -114,6 +116,7 @@ export function GoalFormSheet({
       setCategory(goal.category);
       setGoalType(goal.goalType);
       setIsWorkout(Boolean(goal.isWorkout));
+      setIsNutrition(Boolean(goal.isNutrition));
       setHealthActivity(goal.healthActivity ?? null);
       setHealthMinKm(goal.healthMinKm != null ? String(goal.healthMinKm) : "");
       setGoalPeriod(goal.goalPeriod);
@@ -136,6 +139,7 @@ export function GoalFormSheet({
     setCategory(categories[0]?.value ?? "personal");
     setGoalType("TASK");
     setIsWorkout(false);
+    setIsNutrition(false);
     setHealthActivity(null);
     setHealthMinKm("");
     setGoalPeriod("NONE");
@@ -234,6 +238,7 @@ export function GoalFormSheet({
         targetValue: goalType === "PROGRESS" && targetValue.trim() !== "" ? Number(targetValue) : undefined,
         goalType,
         isWorkout: goalType === "TASK" ? isWorkout : false,
+        isNutrition: goalType === "PROGRESS" ? isNutrition : false,
         healthActivity: goalType === "TASK" ? healthActivity : null,
         healthMinKm: goalType === "TASK" && healthActivity && healthMinKm.trim() !== "" ? Number(healthMinKm) : null,
         goalPeriod,
@@ -306,6 +311,7 @@ export function GoalFormSheet({
       />
       <GoalTypeSection goalType={goalType} onChange={setGoalType} />
       {goalType === "TASK" && <WorkoutToggleSection value={isWorkout} onChange={setIsWorkout} />}
+      {goalType === "PROGRESS" && <NutritionToggleSection value={isNutrition} onChange={setIsNutrition} />}
       {goalType === "TASK" && (
         <View style={{ gap: 8 }}>
           <Text style={{ color: appPalette.semantic.text, fontSize: 14, fontWeight: "600", fontFamily: "Montserrat" }}>Автозачёт из Здоровья</Text>

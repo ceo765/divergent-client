@@ -16,7 +16,14 @@
           "background": false
         }
       ],
-      "expo-video"
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Divergent использует камеру, чтобы посчитать калории по фото еды.",
+          "photosPermission": "Divergent использует фото, чтобы посчитать калории по снимку еды."
+        }
+      ]
     ],
     "android": {
       "package": "com.spritemedia.divergent"
