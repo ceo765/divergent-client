@@ -985,7 +985,7 @@ export async function fetchCategories(): Promise<{ value: string; label: string 
 }
 
 export async function analyzeMealPhoto(input: { goalId: string; imageBase64: string; mimeType: string; hint?: string }): Promise<NutritionAnalysis> {
-  return fetchJSON("/api/nutrition/analyze", { method: "POST", body: JSON.stringify(input) });
+  return fetchJSON("/api/nutrition/analyze", { method: "POST", body: JSON.stringify(input), timeoutMs: AI_API_TIMEOUT_MS });
 }
 
 export async function saveMeal(input: { goalId: string; title: string; items: NutritionItem[]; eatenAt?: string }): Promise<MealEntryView> {
