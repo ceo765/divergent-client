@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes } from "react-router-dom";
 
 import { useAppBootstrap } from "@/app/useAppBootstrap";
 import { renderAuthRoutes, renderProductWebRoutes } from "@/app/web/routes";
+import CookieConsentBanner from "@/components/web/CookieConsentBanner";
 import { webCssVariables } from "@/theme/palette";
 
 export default function WebAppRoot() {
@@ -21,6 +22,7 @@ export default function WebAppRoot() {
         {renderAuthRoutes()}
         {renderProductWebRoutes()}
       </Routes>
+      <CookieConsentBanner />
     </Router>
   );
 }

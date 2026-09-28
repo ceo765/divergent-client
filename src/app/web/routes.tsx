@@ -11,6 +11,7 @@ const ResetPasswordView = lazy(() => import("@/views/auth/reset"));
 const SignInView = lazy(() => import("@/views/auth/sign-in"));
 const SignUpView = lazy(() => import("@/views/auth/sign-up"));
 const ChallengesView = lazy(() => import("@/views/web/challenges"));
+const CookiePolicyView = lazy(() => import("@/views/web/cookie-policy"));
 const FrensView = lazy(() => import("@/views/web/frens"));
 const GoalsView = lazy(() => import("@/views/web/goals"));
 const IndexView = lazy(() => import("@/views/web/index"));
@@ -59,6 +60,7 @@ export function renderProductWebRoutes() {
       <Route path="/app" element={withSuspense(<MarketingView />)} />
       <Route path="/support" element={withSuspense(<SupportView />)} />
       <Route path="/privacy" element={withSuspense(<PrivacyView />)} />
+      <Route path="/cookie-policy" element={withSuspense(<CookiePolicyView />)} />
       <Route path="/" element={renderProtectedWeb(<IndexView />)} />
       <Route path="/frens" element={renderProtectedWeb(<FrensView />)} />
       <Route path="/goals" element={renderProtectedWeb(<GoalsView />)} />
